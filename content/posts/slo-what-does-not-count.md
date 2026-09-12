@@ -1,7 +1,7 @@
 ---
 title: "The hard part of an SLO is deciding what does not count"
-date: 2026-09-12T23:30:00+02:00
-draft: true
+date: 2026-09-13T01:00:08+02:00
+draft: false
 description: "An availability SLO for a thirteen-cluster fleet took one query and three decisions about what counts. The decisions were the work, and the denominator hid a service that was completely down."
 summary: "The query behind an availability SLO is a one-liner. The decisions about what to leave out of it are the design, and the denominator I chose let a dead service drop out of the number instead of hurting it."
 tags: ["slo", "observability", "prometheus", "grafana", "kubernetes"]
