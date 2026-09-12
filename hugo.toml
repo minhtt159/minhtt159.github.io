@@ -36,6 +36,8 @@ timeZone = "Europe/Amsterdam"
     favicon16x16 = "/favicon-16x16.png"
     favicon32x32 = "/favicon-32x32.png"
     apple_touch_icon = "/apple-touch-icon.png"
+    theme_color = "#1e1e2e"
+    msapplication_TileColor = "#1e1e2e"
 
   [params.homeInfoParams]
     Title = "Minh Tran"
