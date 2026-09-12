@@ -64,9 +64,24 @@
 
 ::selection { background: var(--selection); }
 
-/* Fonts: no webfonts. Body keeps PaperMod's system stack; code is local-first
-   so a reader's own programmer font is used when installed. */
-:root { --font-mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "Fira Code", Menlo, Consolas, monospace; }
+/* Fonts: body keeps PaperMod's system stack. Code is JetBrains Mono, self-hosted
+   from static/fonts (OFL, licence alongside), v2.304, regular + bold only.
+   local() first so an installed copy skips the download. */
+@font-face {
+    font-family: "JetBrains Mono";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: local("JetBrains Mono"), local("JetBrainsMono-Regular"), url("/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+@font-face {
+    font-family: "JetBrains Mono";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: local("JetBrains Mono Bold"), local("JetBrainsMono-Bold"), url("/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+}
+:root { --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; }
 code, kbd, pre, samp, .post-content code, .post-content pre { font-family: var(--font-mono); }
 
 .post-content a,

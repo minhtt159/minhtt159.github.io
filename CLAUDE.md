@@ -16,7 +16,7 @@ Catppuccin Latte (light) and Mocha (dark), `assets/css/extended/theme.css`. Role
 
 ## Fonts
 
-No webfonts and no third-party font requests. Body text uses PaperMod's system stack; code uses `--font-mono` from `theme.css`, a local-first stack that picks up a reader's installed programmer font. SVG text uses the same two stacks through the `svg.dg` classes. If a post ever needs a specific face, self-host one woff2 under `static/fonts/` with `font-display: swap`, two files at most, and declare it in `theme.css`; never load from fonts.googleapis.com.
+No third-party font requests. Body text uses PaperMod's system stack. Code and SVG mono text use `--font-mono` from `theme.css`: JetBrains Mono, self-hosted under `static/fonts/` (regular and bold woff2, OFL licence file next to them, `local()` first so an installed copy is used). Adding a face means the same recipe: woff2 in `static/fonts/`, licence alongside, `@font-face` with `font-display: swap` in `theme.css`, two weights at most. Never load from fonts.googleapis.com.
 
 ## Diagrams
 
