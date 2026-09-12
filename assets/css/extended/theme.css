@@ -64,6 +64,11 @@
 
 ::selection { background: var(--selection); }
 
+/* Fonts: no webfonts. Body keeps PaperMod's system stack; code is local-first
+   so a reader's own programmer font is used when installed. */
+:root { --font-mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "Fira Code", Menlo, Consolas, monospace; }
+code, kbd, pre, samp, .post-content code, .post-content pre { font-family: var(--font-mono); }
+
 .post-content a,
 .entry-content a,
 .post-meta a,
@@ -81,7 +86,7 @@ svg.dg .box-e { fill: var(--dg-e-bg); stroke: var(--dg-e); stroke-width: 1.5; }
 svg.dg .zone  { fill: none; stroke: var(--dg-border); stroke-width: 1.2; stroke-dasharray: 4 4; }
 svg.dg .t { fill: var(--dg-text);  font: 600 14px ui-sans-serif, system-ui, sans-serif; }
 svg.dg .s { fill: var(--dg-muted); font: 400 12px ui-sans-serif, system-ui, sans-serif; }
-svg.dg .m { fill: var(--dg-text);  font: 400 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+svg.dg .m { fill: var(--dg-text);  font: 400 12px var(--font-mono); }
 svg.dg .ln   { stroke: var(--dg-border); stroke-width: 2; fill: none; }
 svg.dg .ln-a { stroke: var(--dg-a); stroke-width: 2; fill: none; }
 svg.dg .ln-b { stroke: var(--dg-b); stroke-width: 2; fill: none; }

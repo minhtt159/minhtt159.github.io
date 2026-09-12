@@ -14,6 +14,10 @@ Personal blog. Hugo + PaperMod, deployed by GitHub Actions on merge to `main`. C
 
 Catppuccin Latte (light) and Mocha (dark), `assets/css/extended/theme.css`. Roles follow the upstream style guide: base page, mantle secondary panes, surface0 surface elements, text body, subtext0 labels, blue links, green/yellow/red for good/caution/bad, tints at 15%. Change a colour there and only there; nothing else in the repo carries a hex value.
 
+## Fonts
+
+No webfonts and no third-party font requests. Body text uses PaperMod's system stack; code uses `--font-mono` from `theme.css`, a local-first stack that picks up a reader's installed programmer font. SVG text uses the same two stacks through the `svg.dg` classes. If a post ever needs a specific face, self-host one woff2 under `static/fonts/` with `font-display: swap`, two files at most, and declare it in `theme.css`; never load from fonts.googleapis.com.
+
 ## Diagrams
 
 Inline SVG in the markdown, one per post unless the post cannot be understood without a second.
