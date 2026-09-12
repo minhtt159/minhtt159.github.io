@@ -1,0 +1,78 @@
+baseURL = "https://hnimn.art/"
+locale = "en-us"
+title = "Minh Tran"
+theme = "PaperMod"
+enableRobotsTXT = true
+enableEmoji = false
+timeZone = "Europe/Amsterdam"
+
+[pagination]
+  pagerSize = 10
+
+[minify]
+  disableXML = true
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+[params]
+  env = "production"
+  author = "Minh Tran"
+  description = "Notes on platform engineering: measuring instead of trusting, attributing before claiming, and stating the cost next to the win."
+  defaultTheme = "auto"
+  ShowReadingTime = true
+  ShowToc = true
+  TocOpen = false
+  ShowCodeCopyButtons = true
+  ShowShareButtons = false
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = false
+  ShowRssButtonInSectionTermList = true
+  hideSummary = false
+  disableThemeToggle = false
+
+  [params.homeInfoParams]
+    Title = "Minh Tran"
+    Content = "Platform engineer in Amsterdam. Posts about running Kubernetes fleets, GitOps, observability and the numbers behind them. Measured, attributed, with the cost stated next to the win."
+
+  [[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/minhtt159"
+  [[params.socialIcons]]
+    name = "linkedin"
+    url = "https://www.linkedin.com/in/minhtt159"
+  [[params.socialIcons]]
+    name = "email"
+    url = "mailto:contact@hnimn.art"
+  [[params.socialIcons]]
+    name = "rss"
+    url = "index.xml"
+
+[menu]
+  [[menu.main]]
+    identifier = "posts"
+    name = "Posts"
+    url = "/posts/"
+    weight = 10
+  [[menu.main]]
+    identifier = "tags"
+    name = "Tags"
+    url = "/tags/"
+    weight = 20
+  [[menu.main]]
+    identifier = "about"
+    name = "About"
+    url = "/about/"
+    weight = 30
+
+[markup]
+  [markup.goldmark.renderer]
+    unsafe = true # inline SVG diagrams in posts
+  [markup.highlight]
+    noClasses = false
+    codeFences = true
+    guessSyntax = false
+    lineNos = false
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3
