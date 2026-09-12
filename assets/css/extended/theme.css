@@ -1,0 +1,96 @@
+/* Catppuccin Latte (light) / Mocha (dark), mapped onto PaperMod's variables.
+   Roles follow https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md:
+   base = page, mantle = secondary pane, surface0 = surface elements,
+   text = body copy, subtext0 = labels, blue = links, green/yellow/red = ok/warn/error.
+   Hex values from https://github.com/catppuccin/palette (palette.json). */
+
+:root {
+    --theme: #eff1f5;          /* base */
+    --entry: #e6e9ef;          /* mantle */
+    --primary: #4c4f69;        /* text */
+    --content: #4c4f69;        /* text */
+    --secondary: #6c6f85;      /* subtext0 */
+    --tertiary: #ccd0da;       /* surface0 */
+    --code-block-bg: #e6e9ef;  /* mantle */
+    --code-bg: #ccd0da;        /* surface0 */
+    --border: #ccd0da;         /* surface0 */
+    --link: #1e66f5;           /* blue */
+    --selection: rgba(124, 127, 147, 0.25); /* overlay2 @ 25% */
+
+    /* diagram palette: svg.dg reads only these */
+    --dg-surface: #ccd0da;     /* surface0 */
+    --dg-border: #9ca0b0;      /* overlay0 */
+    --dg-text: #4c4f69;        /* text */
+    --dg-muted: #6c6f85;       /* subtext0 */
+    --dg-a: #1e66f5;           /* blue: primary flow, links */
+    --dg-b: #40a02b;           /* green: good, healthy, counted */
+    --dg-c: #d20f39;           /* red: bad, excluded, blind spot */
+    --dg-d: #df8e1d;           /* yellow: caution, partial */
+    --dg-e: #8839ef;           /* mauve: external, third party */
+}
+
+:root[data-theme="dark"] {
+    --theme: #1e1e2e;          /* base */
+    --entry: #181825;          /* mantle */
+    --primary: #cdd6f4;        /* text */
+    --content: #cdd6f4;        /* text */
+    --secondary: #a6adc8;      /* subtext0 */
+    --tertiary: #313244;       /* surface0 */
+    --code-block-bg: #181825;  /* mantle */
+    --code-bg: #313244;        /* surface0 */
+    --border: #313244;         /* surface0 */
+    --link: #89b4fa;           /* blue */
+    --selection: rgba(147, 153, 178, 0.25); /* overlay2 @ 25% */
+
+    --dg-surface: #313244;     /* surface0 */
+    --dg-border: #6c7086;      /* overlay0 */
+    --dg-text: #cdd6f4;        /* text */
+    --dg-muted: #a6adc8;       /* subtext0 */
+    --dg-a: #89b4fa;
+    --dg-b: #a6e3a1;
+    --dg-c: #f38ba8;
+    --dg-d: #f9e2af;
+    --dg-e: #cba6f7;
+}
+
+/* tints: accent over the page at 15%, the style guide's 10-25% band */
+:root {
+    --dg-a-bg: color-mix(in srgb, var(--dg-a) 15%, var(--theme));
+    --dg-b-bg: color-mix(in srgb, var(--dg-b) 15%, var(--theme));
+    --dg-c-bg: color-mix(in srgb, var(--dg-c) 15%, var(--theme));
+    --dg-d-bg: color-mix(in srgb, var(--dg-d) 15%, var(--theme));
+    --dg-e-bg: color-mix(in srgb, var(--dg-e) 15%, var(--theme));
+}
+
+::selection { background: var(--selection); }
+
+.post-content a,
+.entry-content a,
+.post-meta a,
+.about a { color: var(--link); }
+.post-content a { box-shadow: 0 1px 0 var(--link); }
+
+/* svg.dg: the only classes an inline diagram may use. Palette lives above. */
+svg.dg { display: block; max-width: 100%; height: auto; margin: 1.5rem auto; }
+svg.dg .box   { fill: var(--dg-surface); stroke: var(--dg-border); stroke-width: 1.5; }
+svg.dg .box-a { fill: var(--dg-a-bg); stroke: var(--dg-a); stroke-width: 1.5; }
+svg.dg .box-b { fill: var(--dg-b-bg); stroke: var(--dg-b); stroke-width: 1.5; }
+svg.dg .box-c { fill: var(--dg-c-bg); stroke: var(--dg-c); stroke-width: 1.5; }
+svg.dg .box-d { fill: var(--dg-d-bg); stroke: var(--dg-d); stroke-width: 1.5; }
+svg.dg .box-e { fill: var(--dg-e-bg); stroke: var(--dg-e); stroke-width: 1.5; }
+svg.dg .zone  { fill: none; stroke: var(--dg-border); stroke-width: 1.2; stroke-dasharray: 4 4; }
+svg.dg .t { fill: var(--dg-text);  font: 600 14px ui-sans-serif, system-ui, sans-serif; }
+svg.dg .s { fill: var(--dg-muted); font: 400 12px ui-sans-serif, system-ui, sans-serif; }
+svg.dg .m { fill: var(--dg-text);  font: 400 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+svg.dg .ln   { stroke: var(--dg-border); stroke-width: 2; fill: none; }
+svg.dg .ln-a { stroke: var(--dg-a); stroke-width: 2; fill: none; }
+svg.dg .ln-b { stroke: var(--dg-b); stroke-width: 2; fill: none; }
+svg.dg .ln-c { stroke: var(--dg-c); stroke-width: 2; fill: none; }
+svg.dg .ln-d { stroke: var(--dg-d); stroke-width: 2; fill: none; }
+svg.dg .ln-e { stroke: var(--dg-e); stroke-width: 2; fill: none; }
+svg.dg .ar   { fill: var(--dg-border); }
+svg.dg .ar-a { fill: var(--dg-a); }
+svg.dg .ar-b { fill: var(--dg-b); }
+svg.dg .ar-c { fill: var(--dg-c); }
+svg.dg .ar-d { fill: var(--dg-d); }
+svg.dg .ar-e { fill: var(--dg-e); }

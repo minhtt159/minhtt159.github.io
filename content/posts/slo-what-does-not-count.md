@@ -82,78 +82,56 @@ The request-based board handles this two ways, both partial. The request-rate ti
 
 The measured result, production clusters, 28 days: roughly 470 million requests and about 7,900 server errors, which is 99.998% and, computed from the counts, about 1.7% of a 99.9% error budget spent. It is a true number for what it measures. It is also exactly the number a fleet with one dead service would produce.
 
-<svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="slo-t slo-d">
+<svg class="dg" viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="slo-t slo-d">
 <title id="slo-t">Request-based versus time-based availability denominators</title>
 <desc id="slo-d">Left: the request-based SLI divides server errors by requests the application received, after removing probe URIs; requests answered by the gateway never enter either side, so a dead application drops out of the number. Right: the time-based SLI divides good time slices by wall-clock slices; a slice with no live instance is bad, so absence counts as downtime.</desc>
-<style>
-  svg { --surface:#FFFFFF; --border:#D3D1C7; --text:#2C2C2A; --muted:#5F5E5A;
-        --req:#7F77DD; --reqbg:#EEEDFE; --time:#1D9E75; --timebg:#E1F5EE;
-        --bad:#D85A30; --badbg:#FAECE7; }
-  @media (prefers-color-scheme: dark) {
-    svg { --surface:#2C2C2A; --border:#5F5E5A; --text:#F1EFE8; --muted:#B4B2A9;
-          --req:#AFA9EC; --reqbg:#26215C; --time:#5DCAA5; --timebg:#0F6E56;
-          --bad:#F0997B; --badbg:#4A1B0C; }
-  }
-  /* PaperMod's toggle sets html[data-theme]; it must win over the OS scheme */
-  html[data-theme="dark"] svg { --surface:#2C2C2A; --border:#5F5E5A; --text:#F1EFE8; --muted:#B4B2A9;
-          --req:#AFA9EC; --reqbg:#26215C; --time:#5DCAA5; --timebg:#0F6E56;
-          --bad:#F0997B; --badbg:#4A1B0C; }
-  html[data-theme="light"] svg { --surface:#FFFFFF; --border:#D3D1C7; --text:#2C2C2A; --muted:#5F5E5A;
-          --req:#7F77DD; --reqbg:#EEEDFE; --time:#1D9E75; --timebg:#E1F5EE;
-          --bad:#D85A30; --badbg:#FAECE7; }
-  .b { fill:var(--surface); stroke:var(--border); stroke-width:1.5; }
-  .t { fill:var(--text); font-family:ui-sans-serif,system-ui,sans-serif; font-weight:600; font-size:14px; }
-  .s { fill:var(--muted); font-family:ui-sans-serif,system-ui,sans-serif; font-size:12px; }
-  .m { fill:var(--text); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
-  .zone { fill:none; stroke:var(--border); stroke-width:1.2; stroke-dasharray:4 4; }
-</style>
 <defs>
-  <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--req)"/></marker>
-  <marker id="at" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--time)"/></marker>
-  <marker id="ab" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--bad)"/></marker>
+  <marker id="slo-ar-a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar-a" d="M0,0 L7,3 L0,6 Z"/></marker>
+  <marker id="slo-ar-b" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar-b" d="M0,0 L7,3 L0,6 Z"/></marker>
+  <marker id="slo-ar-c" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar-c" d="M0,0 L7,3 L0,6 Z"/></marker>
 </defs>
 <text x="30" y="34" class="t">Request-based SLI</text>
 <text x="30" y="52" class="s">denominator = requests the application received</text>
-<rect x="30" y="72" width="180" height="44" rx="6" class="b"/>
+<rect x="30" y="72" width="180" height="44" rx="6" class="box"/>
 <text x="120" y="90" text-anchor="middle" class="t">All HTTP requests</text>
 <text x="120" y="106" text-anchor="middle" class="s">at the gateway</text>
-<rect x="30" y="150" width="180" height="44" rx="6" class="b" style="fill:var(--badbg); stroke:var(--bad)"/>
+<rect x="30" y="150" width="180" height="44" rx="6" class="box-c"/>
 <text x="120" y="168" text-anchor="middle" class="t">Answered by gateway</text>
 <text x="120" y="184" text-anchor="middle" class="s">503, 401, 429: never counted</text>
-<rect x="250" y="150" width="180" height="44" rx="6" class="b"/>
+<rect x="250" y="150" width="180" height="44" rx="6" class="box"/>
 <text x="340" y="168" text-anchor="middle" class="t">Reached the app</text>
 <text x="340" y="184" text-anchor="middle" class="s">http_server_requests</text>
-<rect x="250" y="228" width="180" height="44" rx="6" class="b" style="fill:var(--reqbg); stroke:var(--req)"/>
+<rect x="250" y="228" width="180" height="44" rx="6" class="box-a"/>
 <text x="340" y="246" text-anchor="middle" class="t">Denominator</text>
 <text x="340" y="262" text-anchor="middle" class="s">minus /actuator, /management</text>
-<rect x="250" y="306" width="180" height="44" rx="6" class="b" style="fill:var(--reqbg); stroke:var(--req)"/>
+<rect x="250" y="306" width="180" height="44" rx="6" class="box-a"/>
 <text x="340" y="324" text-anchor="middle" class="t">Numerator</text>
 <text x="340" y="340" text-anchor="middle" class="s">outcome = SERVER_ERROR only</text>
-<line x1="120" y1="116" x2="120" y2="146" stroke="var(--bad)" stroke-width="2" marker-end="url(#ab)"/>
-<line x1="180" y1="116" x2="300" y2="146" stroke="var(--req)" stroke-width="2" marker-end="url(#ar)"/>
-<line x1="340" y1="194" x2="340" y2="224" stroke="var(--req)" stroke-width="2" marker-end="url(#ar)"/>
-<line x1="340" y1="272" x2="340" y2="302" stroke="var(--req)" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="120" y1="116" x2="120" y2="146" class="ln-c" marker-end="url(#slo-ar-c)"/>
+<line x1="180" y1="116" x2="300" y2="146" class="ln-a" marker-end="url(#slo-ar-a)"/>
+<line x1="340" y1="194" x2="340" y2="224" class="ln-a" marker-end="url(#slo-ar-a)"/>
+<line x1="340" y1="272" x2="340" y2="302" class="ln-a" marker-end="url(#slo-ar-a)"/>
 <rect x="30" y="368" width="400" height="30" rx="6" class="zone"/>
 <text x="230" y="388" text-anchor="middle" class="s">App fully down: 0 requests, 0 errors, drops out of the ratio</text>
-<line x1="465" y1="30" x2="465" y2="400" stroke="var(--border)" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="465" y1="30" x2="465" y2="400" class="zone"/>
 <text x="500" y="34" class="t">Time-based SLI</text>
 <text x="500" y="52" class="s">denominator = wall-clock slices, whether the app exists or not</text>
-<rect x="500" y="72" width="370" height="44" rx="6" class="b" style="fill:var(--timebg); stroke:var(--time)"/>
+<rect x="500" y="72" width="370" height="44" rx="6" class="box-b"/>
 <text x="685" y="90" text-anchor="middle" class="t">Denominator: wall-clock 5-minute slices</text>
 <text x="685" y="106" text-anchor="middle" class="m">count_over_time(vector(1)[$__range:5m])</text>
-<rect x="500" y="150" width="175" height="60" rx="6" class="b"/>
+<rect x="500" y="150" width="175" height="60" rx="6" class="box"/>
 <text x="587" y="170" text-anchor="middle" class="t">Live?</text>
 <text x="587" y="186" text-anchor="middle" class="m">process_uptime_seconds</text>
 <text x="587" y="201" text-anchor="middle" class="s">at least one instance present</text>
-<rect x="695" y="150" width="175" height="60" rx="6" class="b"/>
+<rect x="695" y="150" width="175" height="60" rx="6" class="box"/>
 <text x="782" y="170" text-anchor="middle" class="t">Errored?</text>
 <text x="782" y="186" text-anchor="middle" class="m">5xx ratio in slice &gt; 1%</text>
 <text x="782" y="201" text-anchor="middle" class="s">same probe exclusion</text>
-<rect x="500" y="244" width="370" height="44" rx="6" class="b" style="fill:var(--timebg); stroke:var(--time)"/>
+<rect x="500" y="244" width="370" height="44" rx="6" class="box-b"/>
 <text x="685" y="262" text-anchor="middle" class="t">Numerator: good slices</text>
 <text x="685" y="278" text-anchor="middle" class="s">live AND not errored, zero-filled per app (see text)</text>
-<line x1="587" y1="210" x2="640" y2="240" stroke="var(--time)" stroke-width="2" marker-end="url(#at)"/>
-<line x1="782" y1="210" x2="730" y2="240" stroke="var(--time)" stroke-width="2" marker-end="url(#at)"/>
+<line x1="587" y1="210" x2="640" y2="240" class="ln-b" marker-end="url(#slo-ar-b)"/>
+<line x1="782" y1="210" x2="730" y2="240" class="ln-b" marker-end="url(#slo-ar-b)"/>
 <rect x="500" y="322" width="370" height="30" rx="6" class="zone"/>
 <text x="685" y="342" text-anchor="middle" class="s">App fully down: 0 good slices / N slices, SLI = 0%</text>
 <rect x="500" y="368" width="370" height="30" rx="6" class="zone"/>
