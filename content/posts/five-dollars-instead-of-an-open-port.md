@@ -7,11 +7,11 @@ summary: "The honest reason the homelab exists. Port forwarding on the ISP modem
 tags: ["homelab", "networking", "vpn", "security"]
 ---
 
-> *Archive note. Written in March 2021 for a blog I have since retired, and the earliest post in that blog's homelab sequence - everything else grew out of it. Prices and products are of their time, and the home ISP is genericised. What follows chronologically is [mining ETH in a homelab](/posts/mining-eth-in-a-homelab/).*
+> *Archive note. Written in March 2021 in Hanoi, for a blog I have since retired, and the earliest post in that blog's homelab sequence - everything else grew out of it. Prices and products are of their time, and the arrangement itself did not last long: I moved to the Netherlands within about a year, and a VPN hub hosted by a Vietnamese carrier stops being the obvious choice once you live on the other side of the planet from it. What follows chronologically is [mining ETH in a homelab](/posts/mining-eth-in-a-homelab/).*
 
 **TL;DR.** You want to reach a machine at home from outside. You can forward a port on the ISP modem, or you can rent a VPS - a virtual private server, a small Linux machine rented by the month - and run a VPN on it that everything dials out to. Both designs put a process on the internet where strangers can reach it. The difference is how many, and whose. Forwarding grows one internet-facing listener per service, on firmware you did not choose and cannot patch. The VPN hub has exactly one listener, on a machine you administer, and that count does not move when the service list grows. The reason this matters is not the first service. It is the fourth.
 
-This post is an argument, not a runbook. The original never recorded which VPN software I used, so I am not going to pretend otherwise - the shape of the design is what carried over, and the shape is what is worth reading.
+Concretely: the VPN was WireGuard, deployed with [Algo](https://github.com/trailofbits/algo) - Ansible scripts from Trail of Bits that stand up a personal WireGuard or IPsec server with hardened defaults - on a virtual machine rented from Viettel IDC, the hosting arm of the same carrier that supplied the line at home. Both of those choices do more work in the argument than they look, so they get their own sections.
 
 ## The network everyone starts with
 
@@ -31,9 +31,21 @@ The hosted remote-desktop tools do this job and do it well:
 
 So I should be straight about the decision, because the cost framing flatters it. Chrome Remote Desktop was free and solved the stated problem. Paying 5 USD a month to escape a hotkey collision would be absurd. What I actually wanted was a general-purpose machine with a public address, which happens to solve remote access as a side effect and then keeps being useful. The remote desktop was the excuse, not the reason.
 
+Buying domestically mattered more than the price did. The instance was at Viettel IDC, the hosting business of the carrier already terminating the line at my flat, so traffic between home and hub stayed inside one national network instead of taking a detour through Singapore or Frankfurt to come back. For a tunnel that every interactive session traverses, that is the difference between a remote desktop feeling local and feeling remote. It is also the part of this design that did not survive moving continents.
+
 Point everything at a VPN running on that VPS and the devices stop being on separate networks. They address each other as though they shared a LAN, which means the built-in remote-desktop protocols - RDP on Windows, VNC elsewhere - work with no product tier involved. Laptop, phone, tablet, all reaching the machines at home.
 
 Worth naming what that does not buy: the VPS is a third party in the path, and unlike Chrome Remote Desktop's direct route, it is in the path for every packet. I traded a company I do not control for a rented box I do, which is a real improvement in authority and a real regression in hop count.
+
+## What is actually running on it
+
+WireGuard, put there by Algo.
+
+Algo is worth naming rather than leaving as "a VPN", because half of what makes this design defensible is which server you expose. It is Ansible, run from your own laptop against a fresh cloud instance, and its opinions are the point. It declines to install OpenVPN or Tor. It drops legacy cipher suites and protocols - no L2TP, no IKEv1, no RSA. It does not put its security on TLS. Users are declared in a config file before deployment and each one gets a generated WireGuard config and a QR code, so adding a phone is scanning a square rather than editing anything on the server. It builds on an Ubuntu LTS with unattended security upgrades switched on.
+
+The WireGuard part matters more than the automation. WireGuard does not reply to packets that fail authentication. A port scan of the VPS finds nothing on that port, because the server says nothing to anyone who cannot already prove they belong. That is a materially different exposure profile from a forwarded port on a modem, where whatever is behind it answers and identifies itself to anybody who knocks. The listener exists, and it is silent.
+
+It is also small. WireGuard's kernel implementation is a few thousand lines against the hundreds of thousands in the IPsec and OpenVPN stacks, and that ratio is the whole reason it is possible to feel relaxed about running one on a public address.
 
 ## The port forward, and why I did not
 
@@ -73,7 +85,7 @@ I spent this entire post arguing against internet-facing listeners, so let me st
 
 <svg class="dg" viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hub-t hub-d">
 <title id="hub-t">Where the internet-facing listener lives, in two designs</title>
-<desc id="hub-d">Both designs have something listening on the internet; the diagram is about how many and on whose hardware. Left: the internet reaches the ISP modem, and each service the owner adds - camera, blog, home automation, media - needs its own forwarded inbound port there, so the number of internet-reachable listeners grows with the service list, on firmware the owner did not choose and cannot patch. Right: the internet reaches one listener, the VPN server on a rented virtual server the owner administers. The ISP modem forwards nothing; the home network and any device away from home both dial outward to that hub and meet on it. Adding a fifth service leaves the listener count at one. Red marks an internet-facing listener in both panels, so the single red arrow on the right is the honest admission that the exposure moved rather than vanished.</desc>
+<desc id="hub-d">Both designs have something listening on the internet; the diagram is about how many and on whose hardware. Left: the internet reaches the ISP modem, and each service the owner adds - camera, blog, home automation, media - needs its own forwarded inbound port there, so the number of internet-reachable listeners grows with the service list, on firmware the owner did not choose and cannot patch. Right: the internet reaches one listener, a WireGuard server on a rented virtual machine the owner administers, which does not answer packets that fail authentication and so does not announce itself to a port scan. The ISP modem forwards nothing; the home network and any device away from home both dial outward to that hub and meet on it. Adding a fifth service leaves the listener count at one. Red marks an internet-facing listener in both panels, so the single red arrow on the right is the honest admission that the exposure moved rather than vanished.</desc>
 <defs>
   <marker id="hub-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar" d="M0,0 L7,3 L0,6 Z"/></marker>
   <marker id="hub-ar-b" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar-b" d="M0,0 L7,3 L0,6 Z"/></marker>
@@ -110,8 +122,8 @@ I spent this entire post arguing against internet-facing listeners, so let me st
 <text class="m" x="530" y="112" text-anchor="middle">internet</text>
 <path class="ln-c" d="M580,107 L644,107" marker-end="url(#hub-ar-c)"/>
 <rect class="box-a" x="650" y="84" width="200" height="46" rx="4"/>
-<text class="m" x="750" y="104" text-anchor="middle">VPS: VPN hub</text>
-<text class="s" x="750" y="121" text-anchor="middle">1 listener, yours to patch</text>
+<text class="m" x="750" y="104" text-anchor="middle">VPS: WireGuard</text>
+<text class="s" x="750" y="121" text-anchor="middle">1 listener, silent to scans</text>
 <rect class="box" x="480" y="168" width="120" height="42" rx="4"/>
 <text class="s" x="540" y="188" text-anchor="middle">laptop, phone</text>
 <text class="s" x="540" y="204" text-anchor="middle">away from home</text>
@@ -135,7 +147,7 @@ I spent this entire post arguing against internet-facing listeners, so let me st
 
 Three bills come with this that the 5 USD does not cover.
 
-**You now run a server.** The modem was condemned for being unpatchable; the replacement is patchable and therefore must be patched, by me, indefinitely. A VPN server left unattended for two years is worse than the port forward it replaced, because at least the ISP occasionally ships firmware.
+**You now run a server.** The modem was condemned for being unpatchable; the replacement is patchable and therefore must be patched. Algo takes the worst of that away by building on an Ubuntu LTS with unattended security upgrades on by default, which is more maintenance than most home routers ever receive. It does not take all of it away: unattended upgrades cover distribution packages, not the day the LTS reaches end of life and the whole instance needs rebuilding. A VPN server abandoned across that boundary is worse than the port forward it replaced.
 
 **It is a single point of failure.** A forwarded port fails one service at a time. A hub fails everything at once, including the route you would use to get back in and fix it. That is a genuinely worse failure mode and the only mitigation is a second way in, which costs either money or the exact exposure you were avoiding.
 
