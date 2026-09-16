@@ -1,98 +1,97 @@
-/* Chroma: catppuccin-mocha in both theme states. Generated with hugo gen
-   chromastyles, then edited as noted below; the block background is
-   --code-block-bg (theme.css), mocha mantle in light and dark alike.
+/* Chroma tokens mapped onto the Catppuccin roles, following the Code Editors
+   section of the style guide:
+   https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md
 
-   Why not catppuccin-latte in light: Latte's accents cannot reach the WCAG AA
-   4.5:1 minimum on any light surface. Measured against Latte mantle, comments
-   are 2.14:1, operators 2.30, numbers 2.45, strings 2.75, and NameVariable -
-   the metric names that are the bulk of a PromQL block - 2.17; peach on pure
-   white is still only 2.97. The style guide's rule is "legibility always comes
-   first, so please use your own judgement", so the code block stays Mocha and
-   the Latte page frames it. Every colour below is 4.75:1 or better on
-   --code-block-bg.
+   One set of rules serves both theme states, because every colour here is a
+   --ctp-* role that theme.css redefines per flavour. No hex values in this file.
 
-   One edit to the generated output: every Comment* token, LiteralStringDoc and
-   LiteralStringHeredoc take overlay2 #9399b2 (6.22:1) rather than the generated
-   overlay0 #6c7086 (3.59:1) and surface2 #585b70 (2.63:1), both under AA. The
-   style guide's Code Editors section specifies overlay2 for comments. */
+   This follows the style guide rather than `hugo gen chromastyles`, which
+   disagrees with it in a few places. The one that mattered: the generated style
+   puts NameVariable on Rosewater, which the guide never says - it assigns
+   Rosewater to Macros alone, so plain identifiers fall to Text. On a Latte
+   block that is the difference between 2.17:1 and 7.06:1, and in a PromQL
+   fence the metric names are almost the whole block. The guide also puts
+   Builtins on Red rather than Sky, Attributes on Yellow rather than Blue,
+   Comments on Overlay 2 rather than Overlay 0, and Escapes and Regex on Pink.
 
-/* Other */ .chroma .x { color:#cdd6f4 }
-/* Error */ .chroma .err { color:#f38ba8 }
-/* CodeLine */ .chroma .cl { color:#cdd6f4 }
-/* LineLink */ .chroma .lnlinks { outline:none;text-decoration:none;color:inherit }
-/* LineTableTD */ .chroma .lntd { vertical-align:top;padding:0;margin:0;border:0; }
-/* LineTable */ .chroma .lntable { border-spacing:0;padding:0;margin:0;border:0; }
-/* LineHighlight */ .chroma .hl { background-color:#45475a }
-/* LineNumbersTable */ .chroma .lnt { white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f849c }
-/* LineNumbers */ .chroma .ln { white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f849c }
-/* Line */ .chroma .line { display:flex; }
-/* Keyword */ .chroma .k { color:#cba6f7 }
-/* KeywordConstant */ .chroma .kc { color:#fab387 }
-/* KeywordDeclaration */ .chroma .kd { color:#f38ba8 }
-/* KeywordNamespace */ .chroma .kn { color:#94e2d5 }
-/* KeywordPseudo */ .chroma .kp { color:#cba6f7 }
-/* KeywordReserved */ .chroma .kr { color:#cba6f7 }
-/* KeywordType */ .chroma .kt { color:#f38ba8 }
-/* NameAttribute */ .chroma .na { color:#89b4fa }
-/* NameClass */ .chroma .nc { color:#f9e2af }
-/* NameConstant */ .chroma .no { color:#f9e2af }
-/* NameDecorator */ .chroma .nd { color:#89b4fa;font-weight:bold }
-/* NameEntity */ .chroma .ni { color:#94e2d5 }
-/* NameException */ .chroma .ne { color:#fab387 }
-/* NameLabel */ .chroma .nl { color:#89dceb }
-/* NameNamespace */ .chroma .nn { color:#fab387 }
-/* NameOther */ .chroma .nx { color:#cdd6f4 }
-/* NameProperty */ .chroma .py { color:#fab387 }
-/* NameTag */ .chroma .nt { color:#cba6f7 }
-/* NameBuiltin */ .chroma .nb { color:#89dceb }
-/* NameBuiltinPseudo */ .chroma .bp { color:#89dceb }
-/* NameVariable */ .chroma .nv { color:#f5e0dc }
-/* NameVariableClass */ .chroma .vc { color:#f5e0dc }
-/* NameVariableGlobal */ .chroma .vg { color:#f5e0dc }
-/* NameVariableInstance */ .chroma .vi { color:#f5e0dc }
-/* NameVariableMagic */ .chroma .vm { color:#f5e0dc }
-/* NameFunction */ .chroma .nf { color:#89b4fa }
-/* NameFunctionMagic */ .chroma .fm { color:#89b4fa }
-/* LiteralDate */ .chroma .ld { color:#cdd6f4 }
-/* LiteralString */ .chroma .s { color:#a6e3a1 }
-/* LiteralStringAffix */ .chroma .sa { color:#f38ba8 }
-/* LiteralStringBacktick */ .chroma .sb { color:#a6e3a1 }
-/* LiteralStringChar */ .chroma .sc { color:#a6e3a1 }
-/* LiteralStringDelimiter */ .chroma .dl { color:#89b4fa }
-/* LiteralStringDoc */ .chroma .sd { color:#9399b2 }
-/* LiteralStringDouble */ .chroma .s2 { color:#a6e3a1 }
-/* LiteralStringEscape */ .chroma .se { color:#89b4fa }
-/* LiteralStringHeredoc */ .chroma .sh { color:#9399b2 }
-/* LiteralStringInterpol */ .chroma .si { color:#a6e3a1 }
-/* LiteralStringOther */ .chroma .sx { color:#a6e3a1 }
-/* LiteralStringRegex */ .chroma .sr { color:#94e2d5 }
-/* LiteralStringSingle */ .chroma .s1 { color:#a6e3a1 }
-/* LiteralStringSymbol */ .chroma .ss { color:#a6e3a1 }
-/* LiteralNumber */ .chroma .m { color:#fab387 }
-/* LiteralNumberBin */ .chroma .mb { color:#fab387 }
-/* LiteralNumberFloat */ .chroma .mf { color:#fab387 }
-/* LiteralNumberHex */ .chroma .mh { color:#fab387 }
-/* LiteralNumberInteger */ .chroma .mi { color:#fab387 }
-/* LiteralNumberIntegerLong */ .chroma .il { color:#fab387 }
-/* LiteralNumberOct */ .chroma .mo { color:#fab387 }
-/* Operator */ .chroma .o { color:#89dceb;font-weight:bold }
-/* OperatorWord */ .chroma .ow { color:#89dceb;font-weight:bold }
-/* OperatorReserved */ .chroma .or { color:#89dceb;font-weight:bold }
-/* Comment */ .chroma .c { color:#9399b2;font-style:italic }
-/* CommentHashbang */ .chroma .ch { color:#9399b2;font-style:italic }
-/* CommentMultiline */ .chroma .cm { color:#9399b2;font-style:italic }
-/* CommentSingle */ .chroma .c1 { color:#9399b2;font-style:italic }
-/* CommentSpecial */ .chroma .cs { color:#9399b2;font-style:italic }
-/* CommentPreproc */ .chroma .cp { color:#9399b2;font-style:italic }
-/* CommentPreprocFile */ .chroma .cpf { color:#9399b2;font-weight:bold;font-style:italic }
-/* GenericDeleted */ .chroma .gd { color:#f38ba8;background-color:#313244 }
-/* GenericEmph */ .chroma .ge { font-style:italic }
-/* GenericError */ .chroma .gr { color:#f38ba8 }
-/* GenericHeading */ .chroma .gh { color:#fab387;font-weight:bold }
-/* GenericInserted */ .chroma .gi { color:#a6e3a1;background-color:#313244 }
-/* GenericOutput */ .chroma .go { color:#cdd6f4 }
-/* GenericPrompt */ .chroma .gp { color:#cdd6f4 }
-/* GenericStrong */ .chroma .gs { font-weight:bold }
-/* GenericSubheading */ .chroma .gu { color:#fab387;font-weight:bold }
-/* GenericTraceback */ .chroma .gt { color:#f38ba8 }
-/* GenericUnderline */ .chroma .gl { text-decoration:underline }
+   Contrast against --code-block-bg: Mocha clears WCAG AA on every role
+   (worst 5.07:1). Latte does not and cannot - its accents top out well under
+   4.5:1 on any Catppuccin background, so light mode carries Text at 7.06:1 and
+   accents between 2.3 and 4.8. That is a property of the palette, kept
+   deliberately for fidelity. */
+
+/* structure, no colour */
+.chroma .lnlinks { outline: none; text-decoration: none; color: inherit; }
+.chroma .lntd { vertical-align: top; padding: 0; margin: 0; border: 0; }
+.chroma .lntable { border-spacing: 0; padding: 0; margin: 0; border: 0; }
+.chroma .line { display: flex; }
+.chroma .ge { font-style: italic; }
+.chroma .gs { font-weight: bold; }
+.chroma .gl { text-decoration: underline; }
+
+/* body: identifiers, literals and anything untokenised */
+.chroma, .chroma .cl, .chroma .x, .chroma .n, .chroma .nx, .chroma .nn,
+.chroma .nl, .chroma .nv, .chroma .vc, .chroma .vg, .chroma .vi,
+.chroma .l, .chroma .ld, .chroma .g, .chroma .go,
+.chroma .gp { color: var(--ctp-text); }
+
+/* Keyword -> Mauve */
+.chroma .k, .chroma .kr, .chroma .kp, .chroma .kd,
+.chroma .kn { color: var(--ctp-mauve); }
+
+/* Strings -> Green */
+.chroma .s, .chroma .s1, .chroma .s2, .chroma .sb, .chroma .sc, .chroma .sx,
+.chroma .ss, .chroma .si, .chroma .sd, .chroma .sh { color: var(--ctp-green); }
+
+/* Escape Sequences, Regex -> Pink */
+.chroma .se, .chroma .sr { color: var(--ctp-pink); }
+
+/* Symbols, Atoms / Builtins / Errors -> Red */
+.chroma .sa, .chroma .nb, .chroma .bp, .chroma .err, .chroma .gr,
+.chroma .gt { color: var(--ctp-red); }
+
+/* Constants, Numbers -> Peach */
+.chroma .m, .chroma .mb, .chroma .mf, .chroma .mh, .chroma .mi, .chroma .mo,
+.chroma .il, .chroma .kc, .chroma .no { color: var(--ctp-peach); }
+
+/* Classes, Types, Annotations, Attributes -> Yellow */
+.chroma .nc, .chroma .kt, .chroma .ne, .chroma .na { color: var(--ctp-yellow); }
+.chroma .nd { color: var(--ctp-yellow); font-weight: bold; }
+
+/* Methods, Functions, and Property (e.g. JSON keys) -> Blue */
+.chroma .nf, .chroma .fm, .chroma .py { color: var(--ctp-blue); }
+
+/* Enum Variants -> Teal */
+.chroma .ni { color: var(--ctp-teal); }
+
+/* Macros -> Rosewater */
+.chroma .vm { color: var(--ctp-rosewater); }
+
+/* Operators -> Sky */
+.chroma .o, .chroma .ow, .chroma .or { color: var(--ctp-sky); font-weight: bold; }
+
+/* Comments -> Overlay 2 */
+.chroma .c, .chroma .c1, .chroma .cm, .chroma .cs, .chroma .cp,
+.chroma .ch { color: var(--ctp-overlay2); font-style: italic; }
+.chroma .cpf { color: var(--ctp-overlay2); font-weight: bold; font-style: italic; }
+
+/* Braces, Delimiters -> Overlay 2 */
+.chroma .p, .chroma .dl { color: var(--ctp-overlay2); }
+
+/* Line Numbers -> Overlay 1 */
+.chroma .lnt, .chroma .ln {
+    white-space: pre;
+    -webkit-user-select: none;
+    user-select: none;
+    margin-right: 0.4em;
+    padding: 0 0.4em;
+    color: var(--ctp-overlay1);
+}
+
+/* Diff and Merge: header Blue, hunk header Peach, inserted/removed lines
+   tinted at 20%, the middle of the guide's 15-25% band */
+.chroma .gh { color: var(--ctp-blue); font-weight: bold; }
+.chroma .gu { color: var(--ctp-peach); font-weight: bold; }
+.chroma .gi { color: var(--ctp-green); background-color: color-mix(in srgb, var(--ctp-green) 20%, transparent); }
+.chroma .gd { color: var(--ctp-red); background-color: color-mix(in srgb, var(--ctp-red) 20%, transparent); }
+.chroma .hl { background-color: color-mix(in srgb, var(--ctp-yellow) 15%, transparent); }
