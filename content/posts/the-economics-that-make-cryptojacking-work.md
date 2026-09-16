@@ -1,7 +1,7 @@
 ---
 title: "The economics that make cryptojacking work"
 date: 2021-07-25T17:00:00+07:00
-draft: true
+draft: false
 description: "Renting GPUs to mine has a return-on-investment calculation that usually says no. Removing the cost line from that calculation is what turns a miner into malware, and it explains why GPU credentials are worth stealing. The shape of the argument, without the numbers, which I never wrote down."
 summary: "A miner that schedules itself onto any GPU node is a workload like any other, and its economics come down to one subtraction. Drive the cost term to zero and the answer is always yes, which is the whole reason cryptojacking exists. A qualitative argument: the original never recorded the figures."
 tags: ["security", "threat-model", "kubernetes", "gpu", "cloud"]

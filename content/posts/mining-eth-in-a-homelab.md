@@ -1,7 +1,7 @@
 ---
 title: "Mining ETH in a homelab, and the day it stopped being about mining"
 date: 2021-04-26T17:00:00+07:00
-draft: true
+draft: false
 description: "Spare GPU slots in machines that were already running, a 4U case because a workstation chassis cooks cards, and a path from GPU passthrough on Proxmox to a Kubernetes Deployment that treats a miner as any other workload."
 summary: "The goal was to make idle hardware pay the electricity bill. The route ran through IOMMU passthrough into a Windows VM, then out again into containers, and what survived the mining was the scheduling pattern underneath it. I never measured whether it paid."
 tags: ["homelab", "proxmox", "kubernetes", "gpu", "virtualization"]

@@ -1,7 +1,7 @@
 ---
 title: "Five dollars a month instead of an open port"
 date: 2021-03-16T21:50:00+07:00
-draft: true
+draft: false
 description: "Every home service you add tempts you to forward one more port on a modem you do not own. Renting a small server as a VPN hub does not remove the internet-facing listener; it replaces several you cannot patch with one you can."
 summary: "The honest reason the homelab exists. Port forwarding on the ISP modem accumulates: one listener per service, on a box you do not administer. A 5 USD virtual server does not make the listener disappear - it moves it somewhere you control."
 tags: ["homelab", "networking", "vpn", "security"]

@@ -1,7 +1,7 @@
 ---
 title: "Merklision: composing two Merkle bugs into 2047 collisions"
 date: 2020-10-24T17:00:00+07:00
-draft: true
+draft: false
 description: "A SVATTT 2020 qualifier challenge asked for 2020 distinct inputs that all hash to one Merkle root. Neither of the two implementation gaps gets close on its own. Alternating between them does, because each one's output is the other one's input."
 summary: "The challenge wanted 2020 distinct strings colliding on one Merkle root. A second-preimage attack gives about ten. An odd-length duplication bug gives about ten more. Alternating the two gives 2047, which I measured rather than derived."
 tags: ["ctf", "cryptography", "merkle-tree", "writeup"]
