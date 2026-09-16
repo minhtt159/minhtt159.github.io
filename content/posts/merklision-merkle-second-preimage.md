@@ -13,35 +13,45 @@ tags: ["ctf", "cryptography", "merkle-tree", "writeup"]
 
 ## The challenge
 
-This was the crypto challenge in the SVATTT 2020 online qualifier - Sinh vien voi An toan thong tin, the Vietnamese inter-university student security competition - authored by `ndh`. I had played SVATTT from 2015 to 2017 on the crypto side and wrote a chain of elliptic-curve challenges for the 2018 edition, so the first thing I do with one of these is look at who set it. That tells you the ratio. Some authors write challenges that are 50 percent thinking and 50 percent code. `ndh` writes challenges that are 80 percent thinking and 20 percent code, and this one held to that.
+This was the crypto challenge in the SVATTT 2020 online qualifier - Sinh vien voi An Toan Thong Tin, the ASEAN Student Contest in Information Security - authored by `ndh`. I had played SVATTT from 2015 to 2017 on the crypto side and wrote a chain of elliptic-curve challenges for the 2018 edition, so the first thing I do with one of these is look at who set it. That tells you the ratio. Some authors write challenges that are 50% thinking and 50% code. `ndh` writes challenges that are 80% thinking and 20% code, and this one held to that.
 
 The server does three things:
 
-1. Reads an integer `n` from you, and generates a random string of `n` elements, each a letter from `a-zA-Z`.
-2. Shows you that string and asks for 2020 further strings, pairwise distinct and distinct from the original. It collects them in a set, so exact repeats are silently discarded rather than rejected.
-3. Accepts if every one of them has the same Merkle hash as the generated string.
+1. Reads an integer `n` from you and asserts `0 <= n <= 2020`, then builds a tuple of `n` single-letter byte strings drawn from `a-zA-Z`.
+2. Shows you that tuple and reads 2020 more. Each one must be pairwise distinct from the others - a repeat trips an assertion and ends the session, it is not silently dropped - and each must have the same Merkle hash.
+3. Prints the flag.
 
-`n` has to stay below 2020. That cap is what makes this a challenge rather than a formality - without it you would pick an enormous `n` and let a single rule run away. You choose `n` within the cap, and that choice turns out to be the whole exploit.
+Two details from the source matter more than they look.
+
+The cap `n <= 2020` is what makes this a challenge rather than a formality: without it you would name an enormous `n` and let a single rule run away. You pick `n` within the cap, and that choice is the whole exploit.
+
+The submission format is a comma-separated list of base64 blobs, decoded straight back into a tuple of byte strings. Elements are arbitrary bytes. There is no alphabet restriction on what you send back, which turns out to matter a great deal. Nor is there any check that a submission differs from the original tuple - only that the 2020 are pairwise distinct - so the original is itself a legal answer.
 
 ## Merkle hashes, briefly
 
-A Merkle tree hashes a block of data by hashing each leaf, then hashing each adjacent pair of hashes, and repeating until one root remains. It is the structure under Bitcoin and Ethereum block bodies, and its point is that you can verify one leaf against the root without holding the rest of the data.
+A Merkle tree hashes a block of data by hashing each leaf, then hashing each adjacent pair of hashes, and repeating until one root remains. Here the hash is SHA-256 truncated to its first 6 bytes, a 48-bit digest, which the challenge does to keep the base64 traffic small. It is the structure under Bitcoin and Ethereum block bodies, and its point is that you can verify one leaf against the root without holding the rest of the data.
 
-Two pieces of notation for the rest of this post. `H(a,b)` is the hash of one adjacent pair, one internal node of the tree. `M(...)` is the Merkle hash of a whole input list, the root you get after collapsing every row. The challenge compares `M` values.
+Three pieces of notation. `h(x)` is the 6-byte digest of one element. `||` is byte concatenation. `M(...)` is the Merkle root of a whole input list, which is what the challenge compares.
 
-The property that matters here is that the tree is built bottom-up from a list, and the intermediate rows are hashes of exactly the same shape as the leaf row. The construction hashes pairs without recording which row they came from, so as far as `M` is concerned, the rows are interchangeable. That is the root cause of everything below.
+The build, stated exactly, because the detail matters below: hash every element to get a row of digests, then repeatedly replace each adjacent pair `a, b` with `h(a || b)` until one value is left.
+
+The property that breaks it is that every row is just a list of byte strings, and the function that consumes a row does not record which row it was. As far as `M` is concerned, rows are interchangeable. That is the root cause of everything below.
 
 ## Rule one: the classic second preimage
 
 A second-preimage attack means: given one input, find a different input with the same hash. For an unvalidated Merkle construction this is not hard.
 
-Take leaves `L1, L2, L3, L4`. The next row up is `H(L1,L2)` and `H(L3,L4)`, and the root is `H` of those two. Now hand the same implementation a two-element input consisting of `H(L1,L2), H(L3,L4)` directly. It hashes them as a pair, gets the same root, and has no way to tell the difference. Writing the leaves as `1, 2, 3, 4` for brevity:
+Take leaves `L1, L2, L3, L4`. The first pass produces digests `h(L1) h(L2) h(L3) h(L4)`. The row above is `h(h(L1)||h(L2))` and `h(h(L3)||h(L4))`, and the root is the hash of those two concatenated.
+
+So what two-element input reproduces that root? Not the internal nodes themselves. The implementation hashes every element before pairing anything, so you have to submit the values that *hash to* the internal nodes. The node is `h(h(L1)||h(L2))`, so the element you send is `h(L1)||h(L2)`: the two child digests, concatenated, twelve bytes.
 
 ```
-M(1, 2, 3, 4) = M(H(1,2), H(3,4))
+M(L1, L2, L3, L4) == M(h(L1)||h(L2), h(L3)||h(L4))
 ```
 
-Every level of the tree gives you one such rewrite, so a tree over `n` leaves gives about `log2(n)` of them. With `n` capped below 2020 that is about ten. Two hundred times short.
+The original writeup glossed this, and the source settles it. The solver builds its rewrite rows as `[hashes[i] + hashes[i+1] for i in range(0, len(hashes), 2)]`, and `+` on `bytes` in Python is concatenation - not addition, and not a further hash. Submitting a twelve-byte element is legal because the wire format base64-decodes to arbitrary bytes and the challenge never inspects them.
+
+Every level gives you one such rewrite, so a tree over `n` leaves gives about `log2(n)` of them. With `n` capped at 2020 that is about ten. Two hundred times short.
 
 ## Rule two: the odd-length duplication
 
@@ -55,7 +65,7 @@ That is worth one collision per odd row, and there are only about ten rows. Anot
 
 <svg class="dg" viewBox="0 0 900 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mk-t mk-d">
 <title id="mk-t">Two Merkle collision rules and their composition</title>
-<desc id="mk-d">Left: the generated input of four leaves hashes pairwise into two intermediate nodes and then one root. Right: the same two intermediate node values, byte for byte identical to the ones on the left, submitted as a fresh two-element input. They reproduce the same root, because the construction never records which row a value came from. Colour marks role, not value: blue is what the server generated, red is what the attacker submits. Below: the odd-length rule duplicates a trailing element without changing the hash, and the chain of four steps shows the two rules being alternated, which is what the prose derives the collision count from.</desc>
+<desc id="mk-d">Left: the four generated leaves are hashed to digests, each adjacent pair of digests is concatenated and hashed into an internal node, and the two nodes combine into the root. Right: a two-element submission where each element is the concatenation of two child digests. Because the implementation hashes every element before pairing, hashing those concatenations reproduces the internal nodes exactly, and therefore the same root. Note the elements submitted are the concatenated digests, twelve bytes each, not the six-byte internal nodes. Colour marks role: blue is what the server generated, red is what the attacker submits. Below: the odd-length rule repeats a trailing element without changing the root, and alternating the two rules is what produces the collision count the post derives.</desc>
 <defs>
   <marker id="mk-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar" d="M0,0 L7,3 L0,6 Z"/></marker>
   <marker id="mk-ar-a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar-a" d="M0,0 L7,3 L0,6 Z"/></marker>
@@ -66,10 +76,10 @@ That is worth one collision per odd row, and there are only about ten rows. Anot
 <text class="s" x="40" y="72">four leaves, hashed pairwise upward</text>
 <rect class="box-b" x="192" y="92" width="76" height="30" rx="4"/>
 <text class="m" x="230" y="112" text-anchor="middle">root</text>
-<rect class="box-a" x="102" y="168" width="86" height="30" rx="4"/>
-<text class="m" x="145" y="188" text-anchor="middle">H(L1,L2)</text>
-<rect class="box-a" x="272" y="168" width="86" height="30" rx="4"/>
-<text class="m" x="315" y="188" text-anchor="middle">H(L3,L4)</text>
+<rect class="box-a" x="92" y="168" width="106" height="30" rx="4"/>
+<text class="s" x="145" y="187" text-anchor="middle">h(h(L1)||h(L2))</text>
+<rect class="box-a" x="262" y="168" width="106" height="30" rx="4"/>
+<text class="s" x="315" y="187" text-anchor="middle">h(h(L3)||h(L4))</text>
 <rect class="box-a" x="52" y="248" width="56" height="30" rx="4"/>
 <text class="m" x="80" y="268" text-anchor="middle">L1</text>
 <rect class="box-a" x="132" y="248" width="56" height="30" rx="4"/>
@@ -87,18 +97,18 @@ That is worth one collision per odd row, and there are only about ten rows. Anot
 <text class="s" x="40" y="304">input length 4</text>
 <rect class="zone" x="450" y="30" width="430" height="290" rx="6"/>
 <text class="t" x="470" y="54">Rule one: feed the middle row back in</text>
-<text class="s" x="470" y="72">the tree never records which row an element came from</text>
+<text class="s" x="470" y="72">submit what hashes to the row above, not the row itself</text>
 <rect class="box-b" x="627" y="92" width="76" height="30" rx="4"/>
 <text class="m" x="665" y="112" text-anchor="middle">root</text>
-<rect class="box-c" x="522" y="168" width="86" height="30" rx="4"/>
-<text class="m" x="565" y="188" text-anchor="middle">H(L1,L2)</text>
-<rect class="box-c" x="722" y="168" width="86" height="30" rx="4"/>
-<text class="m" x="765" y="188" text-anchor="middle">H(L3,L4)</text>
+<rect class="box-c" x="512" y="168" width="106" height="30" rx="4"/>
+<text class="s" x="565" y="187" text-anchor="middle">h(L1)||h(L2)</text>
+<rect class="box-c" x="702" y="168" width="106" height="30" rx="4"/>
+<text class="s" x="765" y="187" text-anchor="middle">h(L3)||h(L4)</text>
 <path class="ln-c" d="M565,168 L565,146 L665,146 L665,128" marker-end="url(#mk-ar-c)"/>
 <path class="ln-c" d="M765,168 L765,146 L665,146" />
-<text class="s" x="470" y="240">same bytes as the blue row on the left, now the whole input</text>
-<text class="s" x="470" y="262">same root, different string, counts as a collision</text>
-<text class="s" x="470" y="284">red marks what the attacker submits, not a different value</text>
+<text class="s" x="470" y="240">12 bytes each: the child digests, concatenated</text>
+<text class="s" x="470" y="262">hashing them reproduces the blue row, so the root matches</text>
+<text class="s" x="470" y="284">not the 6-byte nodes themselves - elements get hashed first</text>
 <text class="s" x="470" y="304">input length 2</text>
 <rect class="zone" x="20" y="340" width="860" height="80" rx="6"/>
 <text class="t" x="40" y="366">Rule two, and why composing them multiplies</text>
@@ -113,28 +123,83 @@ Treating the two rules as separate buckets gives twenty collisions. They are not
 Start from `1, 2, 3, 4, 5`:
 
 1. Odd length, so pad: collides with `1, 2, 3, 4, 5, 5`.
-2. That is six elements, so collapse a level: collides with `H(1,2), H(3,4), H(5,5)`.
-3. That row is odd, so pad again: collides with `H(1,2), H(3,4), H(5,5), H(5,5)`.
-4. Expand that back down a level and you get `1, 2, 3, 4, 5, 5, 5, 5`, which is a plain string of the original alphabet.
+2. That is six elements, so collapse a level: collides with the three concatenated digest pairs of that row.
+3. That row is three long, so pad it: repeat its last element to get four.
+4. Expand back down a level and you are holding `1, 2, 3, 4, 5, 5, 5, 5`, a plain list of the original single-letter elements again.
 
-One five-element input produced four collisions from the bottom two levels alone, without touching the levels above, and the last of them is longer than anything the first rule reaches on its own. There is a ceiling: padding cannot grow an input past the first power of two above `n`, which for `n = 5` is 8.
+One five-element input produced four collisions from the bottom two levels alone, and the last of them is longer than anything the first rule reaches by itself. There is a ceiling: padding cannot grow an input past the first power of two at or above `n`, which for `n = 5` is 8.
 
-Note what step 4 bought. Steps 2 and 3 pass hash values around as list elements, which works because `M` cannot tell a hash from a leaf. Step 4 expands back down and lands on `1, 2, 3, 4, 5, 5, 5, 5` - a string drawn entirely from the original alphabet. That matters if the server is fussy about what a submission may contain, and it is the step that makes the technique robust rather than clever.
+An earlier draft of this post claimed step 4 mattered because it lands back in the original alphabet, and that the server might be fussy about what a submission contains. Reading the source, it is not: elements arrive base64-decoded as arbitrary bytes and nothing inspects them. Rows of concatenated digests are just as acceptable as rows of letters. Step 4 is a consequence of the composition, not a precaution.
 
-So the choice of `n` is the actual exploit. You want every level of the tree to land on an odd count, so that the padding rule fires at each one on the way up. Working the recurrence downward, `n = (((2*2-1)*2-1)*2-1)...` while staying under the cap gives `n = 1025`, whose tree is 11 levels deep and whose padding ceiling is 2048.
+So the choice of `n` is the actual exploit. You want every row on the way up to have an odd count, so the padding rule fires at each one. Working the recurrence downward, `n = (((2*2-1)*2-1)*2-1)...` while staying under the cap gives `n = 1025`, whose padding ceiling is 2048.
 
-How many collisions does that yield? At the time I wrote this, I did not know. I still do not have a closed form for it. What follows is a count I measured, not one I derived, and the honest version of this writeup says so rather than dressing up the output of a brute-force loop as a result.
+## Where 2047 comes from
+
+The original writeup asked how many collisions that yields and answered, in as many words, that I did not know. Having the source back, the answer is exact and a little deflating.
+
+Every answer the search produces is a list, and the lists come out at one distinct length each, from 2 elements up to 2048. That is it. One answer per length:
+
+```
+2048 - 2 + 1 = 2047
+```
+
+The ceiling of 2048 is the padding limit, the floor of 2 is the shortest row a Merkle tree can have above the root, and every length in between is reachable. The requirement was 2020, so the margin was 27 lengths - closer than it felt at the time.
+
+One wrinkle worth stating because it affects the number you can actually submit: the solver seeds its result set with the original tuple before searching, so 2047 counts the input itself. There are 2046 genuine collisions. The challenge never checks a submission against the original, only that the 2020 are pairwise distinct, so submitting it is legal and the point is moot - but 2047 and 2046 both being defensible answers is exactly the sort of thing a writeup should not leave implicit.
+
+I re-ran the solver against the original challenge source while preparing this post. It reproduces 2047, every length from 2 to 2048 present exactly once, in about five seconds on current hardware.
+
+<svg class="dg" viewBox="0 0 900 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="lad-t lad-d">
+<title id="lad-t">Why the answer count is 2047</title>
+<desc id="lad-d">The search emits one valid answer at each possible list length. The shortest is a two-element list, the longest is a 2048-element list, which is the padding ceiling for a 1025-element input, and every length in between is reachable exactly once. The count is therefore 2048 minus 2 plus 1, which is 2047, against a requirement of 2020 - a margin of 27. The original input, 1025 elements long, sits inside that range and is counted by the solver, so 2046 of the 2047 are collisions distinct from it.</desc>
+<defs>
+  <marker id="lad-ar-a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar-a" d="M0,0 L7,3 L0,6 Z"/></marker>
+</defs>
+<text class="t" x="40" y="42">One answer per list length</text>
+<text class="s" x="40" y="62">every length from 2 to 2048 is reachable, and each is reached exactly once</text>
+<rect class="box-b" x="40" y="86" width="120" height="44" rx="4"/>
+<text class="m" x="100" y="106" text-anchor="middle">length 2</text>
+<text class="s" x="100" y="123" text-anchor="middle">shortest row</text>
+<rect class="box" x="188" y="86" width="104" height="44" rx="4"/>
+<text class="m" x="240" y="106" text-anchor="middle">length 3</text>
+<rect class="box" x="320" y="86" width="104" height="44" rx="4"/>
+<text class="m" x="372" y="106" text-anchor="middle">length 4</text>
+<rect class="zone" x="452" y="86" width="104" height="44" rx="6"/>
+<text class="m" x="504" y="112" text-anchor="middle">...</text>
+<rect class="box-a" x="584" y="86" width="132" height="44" rx="4"/>
+<text class="m" x="650" y="106" text-anchor="middle">length 1025</text>
+<text class="s" x="650" y="123" text-anchor="middle">the original</text>
+<rect class="box-b" x="744" y="86" width="132" height="44" rx="4"/>
+<text class="m" x="810" y="106" text-anchor="middle">length 2048</text>
+<text class="s" x="810" y="123" text-anchor="middle">padding ceiling</text>
+<path class="ln-a" d="M160,108 L182,108" marker-end="url(#lad-ar-a)"/>
+<path class="ln-a" d="M292,108 L314,108" marker-end="url(#lad-ar-a)"/>
+<path class="ln-a" d="M424,108 L446,108" marker-end="url(#lad-ar-a)"/>
+<path class="ln-a" d="M556,108 L578,108" marker-end="url(#lad-ar-a)"/>
+<path class="ln-a" d="M716,108 L738,108" marker-end="url(#lad-ar-a)"/>
+<rect class="zone" x="40" y="164" width="400" height="120" rx="6"/>
+<text class="t" x="60" y="190">The count</text>
+<text class="m" x="60" y="218">2048 - 2 + 1 = 2047</text>
+<text class="s" x="60" y="242">required: 2020</text>
+<text class="s" x="60" y="264">margin: 27 lengths</text>
+<rect class="zone" x="470" y="164" width="406" height="120" rx="6"/>
+<text class="t" x="490" y="190">2047 or 2046?</text>
+<text class="s" x="490" y="214">2047 counts the original input, which the solver</text>
+<text class="s" x="490" y="234">seeds into its own result set before searching.</text>
+<text class="s" x="490" y="258">2046 are collisions distinct from it. Either clears</text>
+<text class="s" x="490" y="278">2020, and the challenge accepts the original too.</text>
+</svg>
 
 ## Solving it
 
 There is a clever way to enumerate the collisions and a stupid way. I took the stupid way, because the challenge scores a flag and not an algorithm:
 
-1. The first level gets padded regardless, so loop, repeating the last element until the string reaches length 2048.
-2. For each candidate, compute its Merkle hash and keep it only if it matches the target, recording the collisions found across its levels by applying rule one.
-3. Push every survivor into a set, the same structure the challenge uses, which drops the duplicates. There are a lot of duplicates.
-4. Send the set back to the server.
+1. Take the original tuple and append copies of its last element, one more each time, walking every length from 1025 up to 2048.
+2. Keep a padded candidate only if its Merkle hash still equals the target. Most lengths do not survive this.
+3. For each survivor, walk the tree and collect the rewrite rows that rule one licenses - the concatenated digest pairs at each row where padding occurred. Add the survivor itself alongside them.
+4. Check every one of those against the target again, drop anything already seen, and keep the rest.
 
-Step 2 is doing the filtering. Padding to an arbitrary length does not collide in general - a 1027-element input pads to a different node count than the original and produces a different root - so the loop generates candidates freely and the hash comparison throws most of them away. That is what makes this the stupid way: the search is not constructed to only emit valid answers, it is constructed to emit many answers cheaply and check them all.
+Step 2 is the filter, and it is why this is the stupid way. Padding to an arbitrary length does not collide in general; the loop emits candidates cheaply and lets the hash comparison discard most of them, rather than being constructed to only produce valid ones. The recorded rewrites in step 3 come from the rows the implementation had to pad, which is exactly where the two rules meet.
 
 ```console
 $ python ./merklision.py
@@ -143,9 +208,9 @@ There are 2047 collisions
 Takes 11 sec to produce
 ```
 
-2047 against a requirement of 2020, in eleven seconds. Source is in [the merklision solver gist](https://gist.github.com/minhtt159/af8e19e2ac7088be48889ccd5c6e0e0b).
+2047 against a requirement of 2020, in eleven seconds on 2020 hardware. Both the challenge and the solver are in [the merklision gist](https://gist.github.com/minhtt159/af8e19e2ac7088be48889ccd5c6e0e0b); every claim in this post about how the challenge behaves was checked against that source rather than against my memory of it, and several of them needed correcting.
 
-2047 is `2^11 - 1`, and 1025 leaves give an 11-level tree. That is a suggestive coincidence and I want to be careful with it: it looks like one binary choice per level with the do-nothing case removed, but I never proved that, and the small case does not obviously match - `n = 5` gives a 3-level tree and I counted 4 collisions from its lower levels, not 7. Treat the formula as a guess and the 2047 as an observation.
+Note what 2047 is not. It is tempting to read it as `2^11 - 1`, one binary choice per level of a 1025-element tree with the empty case removed, and I believed something like that for years. The lengths say otherwise: the answers are one per list length from 2 to 2048, so the count is a range size and the resemblance to a power of two is just the padding ceiling being one.
 
 ## What it was worth
 
