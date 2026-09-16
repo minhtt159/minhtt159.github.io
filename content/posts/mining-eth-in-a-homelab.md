@@ -3,13 +3,13 @@ title: "Mining ETH in a homelab, and the day it stopped being about mining"
 date: 2021-04-26T17:00:00+07:00
 draft: true
 description: "Spare GPU slots in machines that were already running, a 4U case because a workstation chassis cooks cards, and a path from GPU passthrough on Proxmox to a Kubernetes Deployment that treats a miner as any other workload."
-summary: "The goal was to make idle hardware pay the electricity bill. The route ran through IOMMU passthrough into a Windows VM, then out again into containers, and what survived the mining was the scheduling pattern underneath it."
+summary: "The goal was to make idle hardware pay the electricity bill. The route ran through IOMMU passthrough into a Windows VM, then out again into containers, and what survived the mining was the scheduling pattern underneath it. I never measured whether it paid."
 tags: ["homelab", "proxmox", "kubernetes", "gpu", "virtualization"]
 ---
 
-> *Archive note. Written in April 2021, with the Kubernetes half added that September, for a blog I have since retired. Ethereum left proof of work in 2022, so the mining is history. The passthrough and scheduling mechanics are the part that outlived it.*
+> *Archive note. This is two posts from a blog I have since retired, stitched together because they were two halves of one arc. The passthrough half was written in April 2021; the Kubernetes half in September 2021. The container insight that joins them landed in between, in July, and has [its own post](/posts/the-economics-that-make-cryptojacking-work/). Ethereum left proof of work in 2022, so the mining is history. The mechanics are the part that outlived it.*
 
-**TL;DR.** During the Covid-era GPU shortage I had spare PCIe slots in machines that were already powered on for other reasons, and a few cards accumulated over the years. Mining ETH on them was a way to make that hardware cover the electricity, water and internet bills. Getting a GPU into a virtual machine meant IOMMU passthrough on Proxmox, because the cards that virtualise themselves properly cost enterprise money. The Windows guest turned out to be the unstable part. Containers removed the passthrough step entirely, and once the miner was a container, a Kubernetes Deployment with a `nodeSelector` scheduled it onto GPU nodes like any other workload. The mining paid for itself. The scheduling pattern is what I actually kept.
+**TL;DR.** During the Covid-era GPU shortage I had spare PCIe slots in machines that were already powered on for other reasons, and a few cards accumulated over the years. Mining ETH on them was a way to make that hardware cover the electricity, water and internet bills. Getting a GPU into a virtual machine meant IOMMU passthrough on Proxmox, because the cards that virtualise themselves properly cost enterprise money. The Windows guest turned out to be the unstable part. Containers removed the passthrough step entirely, and once the miner was a container, Kubernetes could place it on whichever machines had a card to give it. I never wrote down what it earned, so this post cannot tell you whether it paid - only what it cost and how it was built. The scheduling pattern is what I actually kept.
 
 ## Why bother
 
@@ -20,7 +20,9 @@ Four things lined up in early 2021:
 3. I was already running a homelab, which means several PCs, workstations and servers at home. Almost none of them needed graphics, so I had a lot of empty PCIe slots.
 4. I already owned a handful of GPUs, accumulated across years of student machine-building. Running them at full duty felt like getting value out of money already spent.
 
-So: mine to cover the monthly bills, and a bit beyond. The condition attached is worth stating, because it is the whole economic argument. I would not have done this without the background to run it, and I would not have done it if it meant buying the hardware from scratch.
+So: the goal was to cover the monthly bills, and a bit beyond. The condition attached is worth stating, because it is the whole economic argument. I would not have done this without the background to run it, and I would not have built a mining rig from nothing - the premise was spare capacity in machines already earning their keep.
+
+That premise leaked. Over the following months I bought a GPU for this and a case to put it in, which are both on the "from scratch" side of the line I had just drawn. I am leaving the original framing in rather than quietly tightening it, because the drift from "use what I have" to "buy one more thing" is the most honest part of the story and it is what a payback calculation would have caught. I never ran one.
 
 ## Not building a rig
 
@@ -38,23 +40,23 @@ Consumer parts work for passthrough as long as the CPU and motherboard support I
 
 For the hypervisor there were three serious options: QEMU-KVM, Xen, and VMware ESXi. I was poor and partial to open source, which picks QEMU-KVM. Several distributions expose it, and the friendliest of those is Proxmox.
 
-Then Proxmox got a Windows guest with the GPU passed through. Windows over HiveOS was a personal call - I needed Windows for other things anyway, and one card, an RTX 3060, only reached 48 MH/s after a driver unlock that exists on Windows. Down the rabbit hole: once it had been running a while, the Windows guest turned out to be the least stable component in the stack.
+Then Proxmox got a Windows guest with the GPU passed through. Windows over HiveOS was a personal call - I needed Windows for other things anyway, and one card, an RTX 3060, needed a driver unlock that only existed on Windows in order to reach 48 MH/s, megahashes per second, the rate at which it can attempt the mining puzzle. Without that unlock the card ran at a fraction of its capability, because the vendor shipped it deliberately limited to make it unattractive to miners. Down the rabbit hole: once it had been running a while, the Windows guest itself turned out to be the least reliable component in the stack, and rebooting it was a recurring chore rather than a one-off.
 
 With the guest up, the rest is mundane. Install the miner, join a pool. My hashrate was small, so I picked ethermine for its 0.1 ETH payout floor, which suits a small operation - a higher floor means waiting months to see anything.
 
 One quiet benefit of virtualising: when a bare-metal rig hangs, someone has to walk over and power-cycle it. Under Proxmox the guest reboots from a web interface, the same as VMware or VirtualBox.
 
-Heat was the real problem. GPUs crammed into a workstation chassis cook. I bought a 4U case to dedicate to this, and that configuration ran about three months without drama.
+Heat was the real problem. GPUs crammed into a workstation chassis cook. I bought a 4U case - four rack units tall, so roughly 18 cm of internal height against the 8 or so a desktop tower gives a card, which is enough room for the airflow the cards actually want - and dedicated it to this. Thermally that configuration ran about three months without drama. That is a claim about the hardware, not about the Windows guest running on it; those two things were stable and unstable respectively, at the same time.
 
 ## The part that outlived the mining
 
-Some months in, a more experienced friend pointed out the obvious thing I had walked past: run the miner in a Docker container and the passthrough problem disappears. He was right. Containers skip the passthrough setup and avoid the CPU penalty that comes with it. Mining is not CPU-hungry enough for that penalty to matter much, but the simplification does.
+By July, a more experienced friend had pointed out the obvious thing I walked past: run the miner in a Docker container and the passthrough problem disappears. He was right. Containers skip the passthrough setup, and they avoid the CPU cost of emulating a machine around the card - a virtual machine spends real cycles on virtualised interrupts and device access that a container simply does not incur. For a miner that overhead is small, because mining hammers the GPU and barely touches the CPU. The simplification is the part worth having.
 
 Once the miner is a container, it is just another workload, and the whole apparatus for running workloads applies to it. That is where this stopped being about mining.
 
 <svg class="dg" viewBox="0 0 900 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mine-t mine-d">
 <title id="mine-t">Two ways to get a miner onto a GPU: passthrough versus container scheduling</title>
-<desc id="mine-d">Top row, the April 2021 path: Proxmox maps the card into a Windows guest through IOMMU passthrough, the miner runs inside that guest, and the guest is the fragile link. Bottom row, the September 2021 path: a Dockerfile is built by GitHub Actions into the GitHub container registry, a Kubernetes Deployment pulls it, and a nodeSelector plus the NVIDIA device plugin place the pod on a GPU node. The container path has no passthrough step and scales by changing a replica count.</desc>
+<desc id="mine-d">Top row, the April 2021 path: Proxmox uses IOMMU, a hardware address-mapping feature rather than a stage the work travels through, to hand a physical card to a Windows guest; the miner runs inside that guest against that one card, and the guest is the fragile link. Bottom row, the September 2021 path: a Dockerfile wrapping the T-Rex miner is built by GitHub Actions into the GitHub container registry, a Kubernetes Deployment pulls it, and a nodeSelector plus the NVIDIA device plugin place each pod on a node that has a card. The container path has no passthrough step, recovers a failed pod by rescheduling it, and grows by changing a replica count rather than by preparing another machine by hand.</desc>
 <defs>
   <marker id="mine-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar" d="M0,0 L7,3 L0,6 Z"/></marker>
   <marker id="mine-ar-a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar-a" d="M0,0 L7,3 L0,6 Z"/></marker>
@@ -67,13 +69,13 @@ Once the miner is a container, it is just another workload, and the whole appara
 <text class="s" x="100" y="115" text-anchor="middle">QEMU-KVM host</text>
 <rect class="box-d" x="180" y="76" width="120" height="52" rx="4"/>
 <text class="m" x="240" y="97" text-anchor="middle">IOMMU</text>
-<text class="s" x="240" y="115" text-anchor="middle">passthrough</text>
+<text class="s" x="240" y="115" text-anchor="middle">mapping, not a hop</text>
 <rect class="box-d" x="320" y="76" width="120" height="52" rx="4"/>
 <text class="m" x="380" y="97" text-anchor="middle">Windows VM</text>
 <text class="s" x="380" y="115" text-anchor="middle">driver unlock</text>
 <rect class="box-a" x="460" y="76" width="120" height="52" rx="4"/>
 <text class="m" x="520" y="97" text-anchor="middle">miner</text>
-<text class="s" x="520" y="115" text-anchor="middle">one card</text>
+<text class="s" x="520" y="115" text-anchor="middle">one guest, one card</text>
 <rect class="box-e" x="600" y="76" width="120" height="52" rx="4"/>
 <text class="m" x="660" y="97" text-anchor="middle">pool</text>
 <text class="s" x="660" y="115" text-anchor="middle">0.1 ETH floor</text>
@@ -81,7 +83,7 @@ Once the miner is a container, it is just another workload, and the whole appara
 <path class="ln-d" d="M300,102 L314,102" marker-end="url(#mine-ar-d)"/>
 <path class="ln-d" d="M440,102 L454,102" marker-end="url(#mine-ar-d)"/>
 <path class="ln" d="M580,102 L594,102" marker-end="url(#mine-ar)"/>
-<text class="s" x="40" y="156">scales by building another machine; the guest is the fragile link</text>
+<text class="s" x="40" y="156">each card is set up by hand, in its own guest; the guest is the fragile link</text>
 <rect class="zone" x="20" y="210" width="860" height="170" rx="6"/>
 <text class="t" x="40" y="236">September 2021: schedule it like any other workload</text>
 <rect class="box" x="40" y="256" width="120" height="52" rx="4"/>
@@ -126,11 +128,11 @@ Using T-Rex is a matter of reading its command-line options and filling in the f
 **Deploy it.** With the image in a registry, four things matter on the Kubernetes side:
 
 - Install a device plugin on the GPU nodes. The [NVIDIA k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin) advertises the cards as a schedulable resource.
-- Set `replicas` to the number of agents you want. On a cloud provider backed by a scale set, that number can grow as far as the budget does.
+- Set `replicas` to the number of agents you want. Where the node pool is backed by a cloud scale set - a managed group that creates identical machines on demand, which every major provider offers under its own name - that number can grow as far as the budget does.
 - Set a `nodeSelector` so the miner only lands on nodes that have a card. Without it the scheduler will happily place the pod somewhere with nothing to mine on.
-- Set `hostAliases` for the pool's domains. Skip this and you will end up explaining to whoever runs the DNS server why those lookups exist.
+- Set `hostAliases` for the pool's domains. This pins the names to addresses in the pod's own `/etc/hosts` so the lookups never reach the cluster resolver. The original post recommended this to avoid awkward questions from whoever runs the DNS server, which is worth naming for what it is: that is evasion, and the [companion post](/posts/the-economics-that-make-cryptojacking-work/) argues the defender's side of exactly this. Left in because it is what the post said.
 
-A working example is at [minhtt159/ghcr-tictactoe](https://github.com/minhtt159/ghcr-tictactoe). Fork it, change the wallet address, and it runs.
+A working example is at [minhtt159/ghcr-tictactoe](https://github.com/minhtt159/ghcr-tictactoe). The name is left over from what the repository started as, a throwaway for testing GitHub container registry publishing; what it holds is the Dockerfile and workflow described above. Fork it, change the wallet address, and it runs.
 
 ## What was actually learned
 
