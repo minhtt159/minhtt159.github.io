@@ -1,65 +1,105 @@
-/* Catppuccin Latte (light) / Mocha (dark), mapped onto PaperMod's variables.
-   Roles follow https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md:
-   base = page, mantle = secondary pane, surface0 = surface elements,
-   text = body copy, subtext0 = labels, blue = links, green/yellow/red = ok/warn/error.
-   Hex values from https://github.com/catppuccin/palette (palette.json). */
+/* Catppuccin, Latte in light and Mocha in dark. Every colour in the repo comes
+   from the two blocks below; no other file carries a hex value. Hexes are
+   verbatim from https://github.com/catppuccin/palette (palette.json), the whole
+   26-colour ramp of each flavour so later work can reach for a role without
+   adding a literal. Roles follow the style guide:
+   https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md */
 
 :root {
-    --theme: #eff1f5;          /* base */
-    --entry: #e6e9ef;          /* mantle */
-    --primary: #4c4f69;        /* text */
-    --content: #4c4f69;        /* text */
-    --secondary: #6c6f85;      /* subtext0 */
-    --tertiary: #ccd0da;       /* surface0 */
-    --code-block-bg: #e6e9ef;  /* mantle */
-    --code-bg: #ccd0da;        /* surface0 */
-    --border: #ccd0da;         /* surface0 */
-    --link: #1e66f5;           /* blue */
-    --selection: rgba(124, 127, 147, 0.25); /* overlay2 @ 25% */
-
-    /* diagram palette: svg.dg reads only these */
-    --dg-surface: #ccd0da;     /* surface0 */
-    --dg-border: #9ca0b0;      /* overlay0 */
-    --dg-text: #4c4f69;        /* text */
-    --dg-muted: #6c6f85;       /* subtext0 */
-    --dg-a: #1e66f5;           /* blue: primary flow, links */
-    --dg-b: #40a02b;           /* green: good, healthy, counted */
-    --dg-c: #d20f39;           /* red: bad, excluded, blind spot */
-    --dg-d: #df8e1d;           /* yellow: caution, partial */
-    --dg-e: #8839ef;           /* mauve: external, third party */
+    --ctp-rosewater: #dc8a78;
+    --ctp-flamingo:  #dd7878;
+    --ctp-pink:      #ea76cb;
+    --ctp-mauve:     #8839ef;
+    --ctp-red:       #d20f39;
+    --ctp-maroon:    #e64553;
+    --ctp-peach:     #fe640b;
+    --ctp-yellow:    #df8e1d;
+    --ctp-green:     #40a02b;
+    --ctp-teal:      #179299;
+    --ctp-sky:       #04a5e5;
+    --ctp-sapphire:  #209fb5;
+    --ctp-blue:      #1e66f5;
+    --ctp-lavender:  #7287fd;
+    --ctp-text:      #4c4f69;
+    --ctp-subtext1:  #5c5f77;
+    --ctp-subtext0:  #6c6f85;
+    --ctp-overlay2:  #7c7f93;
+    --ctp-overlay1:  #8c8fa1;
+    --ctp-overlay0:  #9ca0b0;
+    --ctp-surface2:  #acb0be;
+    --ctp-surface1:  #bcc0cc;
+    --ctp-surface0:  #ccd0da;
+    --ctp-base:      #eff1f5;
+    --ctp-mantle:    #e6e9ef;
+    --ctp-crust:     #dce0e8;
 }
 
 :root[data-theme="dark"] {
-    --theme: #1e1e2e;          /* base */
-    --entry: #181825;          /* mantle */
-    --primary: #cdd6f4;        /* text */
-    --content: #cdd6f4;        /* text */
-    --secondary: #a6adc8;      /* subtext0 */
-    --tertiary: #313244;       /* surface0 */
-    --code-block-bg: #181825;  /* mantle */
-    --code-bg: #313244;        /* surface0 */
-    --border: #313244;         /* surface0 */
-    --link: #89b4fa;           /* blue */
-    --selection: rgba(147, 153, 178, 0.25); /* overlay2 @ 25% */
+    --ctp-rosewater: #f5e0dc;
+    --ctp-flamingo:  #f2cdcd;
+    --ctp-pink:      #f5c2e7;
+    --ctp-mauve:     #cba6f7;
+    --ctp-red:       #f38ba8;
+    --ctp-maroon:    #eba0ac;
+    --ctp-peach:     #fab387;
+    --ctp-yellow:    #f9e2af;
+    --ctp-green:     #a6e3a1;
+    --ctp-teal:      #94e2d5;
+    --ctp-sky:       #89dceb;
+    --ctp-sapphire:  #74c7ec;
+    --ctp-blue:      #89b4fa;
+    --ctp-lavender:  #b4befe;
+    --ctp-text:      #cdd6f4;
+    --ctp-subtext1:  #bac2de;
+    --ctp-subtext0:  #a6adc8;
+    --ctp-overlay2:  #9399b2;
+    --ctp-overlay1:  #7f849c;
+    --ctp-overlay0:  #6c7086;
+    --ctp-surface2:  #585b70;
+    --ctp-surface1:  #45475a;
+    --ctp-surface0:  #313244;
+    --ctp-base:      #1e1e2e;
+    --ctp-mantle:    #181825;
+    --ctp-crust:     #11111b;
+}
 
-    --dg-surface: #313244;     /* surface0 */
-    --dg-border: #6c7086;      /* overlay0 */
-    --dg-text: #cdd6f4;        /* text */
-    --dg-muted: #a6adc8;       /* subtext0 */
-    --dg-a: #89b4fa;
-    --dg-b: #a6e3a1;
-    --dg-c: #f38ba8;
-    --dg-d: #f9e2af;
-    --dg-e: #cba6f7;
+/* PaperMod's variables, mapped onto the palette. base = page, mantle =
+   secondary pane, surface0 = surface elements, text = body copy, subtext0 =
+   labels, blue = links, green/yellow/red = success/warning/error.
+   The dark selector is repeated so these outrank PaperMod's own
+   :root[data-theme="dark"] block; the --ctp-* values already swap per flavour. */
+:root,
+:root[data-theme="dark"] {
+    --theme:     var(--ctp-base);
+    --entry:     var(--ctp-mantle);
+    --primary:   var(--ctp-text);
+    --content:   var(--ctp-text);
+    --secondary: var(--ctp-subtext0);
+    --tertiary:  var(--ctp-surface0);
+    --code-bg:   var(--ctp-surface0);
+    --border:    var(--ctp-surface0);
+    --link:      var(--ctp-blue);
+    --selection: color-mix(in srgb, var(--ctp-overlay2) 25%, transparent); /* guide: 20-30% */
+
+    /* diagram palette: svg.dg reads only these */
+    --dg-surface: var(--ctp-surface0);
+    --dg-border:  var(--ctp-overlay0);
+    --dg-text:    var(--ctp-text);
+    --dg-muted:   var(--ctp-subtext0);
+    --dg-a: var(--ctp-blue);    /* primary flow, links */
+    --dg-b: var(--ctp-green);   /* good, healthy, counted */
+    --dg-c: var(--ctp-red);     /* bad, excluded, blind spot */
+    --dg-d: var(--ctp-yellow);  /* caution, partial */
+    --dg-e: var(--ctp-mauve);   /* external, third party */
 }
 
 /* tints: accent over the page at 15%, the style guide's 10-25% band */
 :root {
-    --dg-a-bg: color-mix(in srgb, var(--dg-a) 15%, var(--theme));
-    --dg-b-bg: color-mix(in srgb, var(--dg-b) 15%, var(--theme));
-    --dg-c-bg: color-mix(in srgb, var(--dg-c) 15%, var(--theme));
-    --dg-d-bg: color-mix(in srgb, var(--dg-d) 15%, var(--theme));
-    --dg-e-bg: color-mix(in srgb, var(--dg-e) 15%, var(--theme));
+    --dg-a-bg: color-mix(in srgb, var(--dg-a) 15%, var(--ctp-base));
+    --dg-b-bg: color-mix(in srgb, var(--dg-b) 15%, var(--ctp-base));
+    --dg-c-bg: color-mix(in srgb, var(--dg-c) 15%, var(--ctp-base));
+    --dg-d-bg: color-mix(in srgb, var(--dg-d) 15%, var(--ctp-base));
+    --dg-e-bg: color-mix(in srgb, var(--dg-e) 15%, var(--ctp-base));
 }
 
 ::selection { background: var(--selection); }
@@ -114,3 +154,18 @@ svg.dg .ar-b { fill: var(--dg-b); }
 svg.dg .ar-c { fill: var(--dg-c); }
 svg.dg .ar-d { fill: var(--dg-d); }
 svg.dg .ar-e { fill: var(--dg-e); }
+
+/* Code blocks. Latte in light, Mocha in dark, strict palette either way; the
+   token mapping is in chroma.css. Background is the flavour's extreme rather
+   than its mantle, because that is what buys the most token contrast: base is
+   the lightest Latte pane, crust the darkest Mocha one. A surface0 border does
+   the separating that a mantle fill used to. */
+:root                    { --code-block-bg: var(--ctp-base); }
+:root[data-theme="dark"] { --code-block-bg: var(--ctp-crust); } /* outranks PaperMod's own */
+.md-content .highlight:not(table),
+.md-content pre code { border: 1px solid var(--ctp-surface0); }
+
+/* PaperMod hardcodes rgb(213, 213, 214) here with no light-mode variant, which
+   left an untagged fence at 1.21:1 on a Latte block. Also carries the colour
+   for any fence chroma does not tokenise. */
+.md-content pre code { color: var(--ctp-text); }
