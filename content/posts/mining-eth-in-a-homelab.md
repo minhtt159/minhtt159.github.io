@@ -7,22 +7,22 @@ summary: "The goal was to make idle hardware pay the electricity bill. The route
 tags: ["homelab", "proxmox", "kubernetes", "gpu", "virtualization"]
 ---
 
-> *Archive note. This is two posts from a blog I have since retired, stitched together because they were two halves of one arc. The passthrough half was written in April 2021; the Kubernetes half in September 2021. The container insight that joins them landed in between, in July, and has [its own post](/posts/the-economics-that-make-cryptojacking-work/). Ethereum left proof of work in 2022, so the mining is history. The mechanics are the part that outlived it.*
+> *Archive note. This is two posts from a blog I have since retired, stitched together because they were two halves of one arc. The passthrough half was written in April 2021; the Kubernetes half in September 2021, so this post carries material from five months after its own date. The container insight that joins them landed in between, in July, and has [its own post](/posts/the-economics-that-make-cryptojacking-work/). Ethereum left proof of work in 2022, so the mining is history. The mechanics are the part that outlived it.*
 
-**TL;DR.** During the Covid-era GPU shortage I had spare PCIe slots in machines that were already powered on for other reasons, and a few cards accumulated over the years. Mining ETH on them was a way to make that hardware cover the electricity, water and internet bills. Getting a GPU into a virtual machine meant IOMMU passthrough on Proxmox, because the cards that virtualise themselves properly cost enterprise money. The Windows guest turned out to be the unstable part. Containers removed the passthrough step entirely, and once the miner was a container, Kubernetes could place it on whichever machines had a card to give it. I never wrote down what it earned, so this post cannot tell you whether it paid - only what it cost and how it was built. The scheduling pattern is what I actually kept.
+**TL;DR.** During the Covid-era GPU shortage I had spare PCIe slots in machines that were already powered on for other reasons, and a few cards accumulated over the years. Mining ETH on them was a way to make that hardware cover the electricity, water and internet bills. Getting a GPU into a virtual machine meant IOMMU passthrough on Proxmox, because the cards that virtualise themselves properly cost enterprise money. The Windows guest turned out to be the unstable part. Moving the miner into a container on bare-metal nodes removed the passthrough step, and once the miner was a container, Kubernetes could place it on whichever machines had a card to give it. I never wrote down what it earned, so this post cannot tell you whether it paid - only what it cost and how it was built. The scheduling pattern is what I actually kept.
 
 ## Why bother
 
 Four things lined up in early 2021:
 
 1. Lockdowns gave people time to trade, and crypto and equities both moved, mostly upward.
-2. The same lockdowns broke the semiconductor supply chain. GPUs were the scarce part, and GPUs are what mines ETH, so mining got harder and the price went up together.
+2. The same lockdowns broke the semiconductor supply chain. GPUs were the scarce part, and GPUs are what mine ETH, so mining got harder and the price went up together.
 3. I was already running a homelab, which means several PCs, workstations and servers at home. Almost none of them needed graphics, so I had a lot of empty PCIe slots.
 4. I already owned a handful of GPUs, accumulated across years of student machine-building. Running them at full duty felt like getting value out of money already spent.
 
 So: the goal was to cover the monthly bills, and a bit beyond. The condition attached is worth stating, because it is the whole economic argument. I would not have done this without the background to run it, and I would not have built a mining rig from nothing - the premise was spare capacity in machines already earning their keep.
 
-That premise leaked. Over the following months I bought a GPU for this and a case to put it in, which are both on the "from scratch" side of the line I had just drawn. I am leaving the original framing in rather than quietly tightening it, because the drift from "use what I have" to "buy one more thing" is the most honest part of the story and it is what a payback calculation would have caught. I never ran one.
+That premise leaked. Over the following months I bought two GPUs for this and a case to put them in, which are both on the "from scratch" side of the line I had just drawn. I am leaving the original framing in rather than quietly tightening it, because the drift from "use what I have" to "buy one more thing" is the most honest part of the story and it is what a payback calculation would have caught. I never ran one.
 
 ## Not building a rig
 
@@ -34,23 +34,25 @@ I went the other way. The workstations already existed, so adding GPUs to them r
 
 Mining software runs on Windows or on Linux, so the card needs to reach an operating system. Since I virtualise rather than installing on bare metal, a guest by default has no idea what hardware exists underneath it. Handing it real hardware needs IOMMU, the input-output memory management unit, which is what lets a device be mapped safely into a guest's address space.
 
-In server hardware the clean answer is SR-IOV, single-root IO virtualization, where the card presents itself as several virtual functions. Cards that do that are priced accordingly. Compare an RTX A6000 against an RTX 3090 sometime: the same chip, the same CUDA core count, wildly different price. Enterprise cards were out of reach, so consumer cards it was, and the one I bought for this was an RTX 3080 at 24.5 million VND.
+In server hardware the clean answer is hardware-assisted partitioning, where one card presents itself to several guests at once. Cards that do that are priced accordingly. Compare an RTX A6000 against an RTX 3090 sometime: the same GA102 die, similar core counts, wildly different price. And the price of the card is not the whole barrier - NVIDIA gates the virtualisation behind a separate software licence, so buying the expensive card is necessary rather than sufficient. Enterprise cards were out of reach, so consumer cards it was. The two I bought for this were an RTX 3060 and an RTX 3080, the latter at 24.5 million VND.
 
 Consumer parts work for passthrough as long as the CPU and motherboard support IOMMU. I tend to buy high-end desktop CPUs, so this was never the blocker.
 
 For the hypervisor there were three serious options: QEMU-KVM, Xen, and VMware ESXi. I was poor and partial to open source, which picks QEMU-KVM. Several distributions expose it, and the friendliest of those is Proxmox.
 
-Then Proxmox got a Windows guest with the GPU passed through. Windows over HiveOS was a personal call - I needed Windows for other things anyway, and one card, an RTX 3060, needed a driver unlock that only existed on Windows in order to reach 48 MH/s, megahashes per second, the rate at which it can attempt the mining puzzle. Without that unlock the card ran at a fraction of its capability, because the vendor shipped it deliberately limited to make it unattractive to miners. Down the rabbit hole: once it had been running a while, the Windows guest itself turned out to be the least reliable component in the stack, and rebooting it was a recurring chore rather than a one-off.
+Then Proxmox got a Windows guest with the GPU passed through. Windows over HiveOS was not really a preference. One card, an RTX 3060, needed a driver unlock that only existed on Windows in order to reach 48 MH/s - megahashes per second, the rate at which it can attempt the mining puzzle - and that decided it. Without that unlock the card ran at a fraction of its capability, because the vendor shipped it deliberately limited to make it unattractive to miners. Down the rabbit hole: once it had been running a while, the Windows guest itself turned out to be the least reliable component in the stack, and rebooting it was a recurring chore rather than a one-off.
 
-With the guest up, the rest is mundane. Install the miner, join a pool. My hashrate was small, so I picked ethermine for its 0.1 ETH payout floor, which suits a small operation - a higher floor means waiting months to see anything.
+With the guest up, the rest is mundane. Install the miner and join a pool - a pool being the arrangement where many small miners submit work together and split the proceeds, because a lone consumer card has no realistic chance of finding a block on its own. Pools differ in the balance they owe you before they will pay it out, and I picked ethermine, whose 0.1 ETH floor suited a small hashrate. That threshold is the thing that decides whether payouts are a regular event or a theoretical one. I did not keep records of which it turned out to be.
 
 One quiet benefit of virtualising: when a bare-metal rig hangs, someone has to walk over and power-cycle it. Under Proxmox the guest reboots from a web interface, the same as VMware or VirtualBox.
 
-Heat was the real problem. GPUs crammed into a workstation chassis cook. I bought a 4U case - four rack units tall, so roughly 18 cm of internal height against the 8 or so a desktop tower gives a card, which is enough room for the airflow the cards actually want - and dedicated it to this. Thermally that configuration ran about three months without drama. That is a claim about the hardware, not about the Windows guest running on it; those two things were stable and unstable respectively, at the same time.
+Heat was the real problem. GPUs crammed into a workstation chassis cook. I bought a 4U case - four rack units, about 17.8 cm of external height, tall enough to take a full-height card standing up with airflow around it rather than pressed against its neighbour - and dedicated it to this. Thermally that configuration ran about three months without drama. That is a claim about the hardware, not about the Windows guest running on it; those two things were stable and unstable respectively, at the same time.
 
 ## The part that outlived the mining
 
-By July, a more experienced friend had pointed out the obvious thing I walked past: run the miner in a Docker container and the passthrough problem disappears. He was right. Containers skip the passthrough setup, and they avoid the CPU cost of emulating a machine around the card - a virtual machine spends real cycles on virtualised interrupts and device access that a container simply does not incur. For a miner that overhead is small, because mining hammers the GPU and barely touches the CPU. The simplification is the part worth having.
+By July, a more experienced friend had pointed out the obvious thing I walked past: run the miner in a Docker container and the passthrough problem goes away. That is true with one condition worth stating, because the post above spends a long time establishing the opposite habit: it only goes away if the machine holding the card runs Linux on the metal. Put Kubernetes nodes inside Proxmox guests and the card still has to be passed into the guest with IOMMU, and you have moved the problem down a layer rather than removed it. The nodes I built for this ran on the metal, so the hypervisor left the picture entirely.
+
+With that settled, containers skip the passthrough setup, and they avoid the CPU cost of emulating a machine around the card - a virtual machine spends real cycles on virtualised interrupts and device access that a container simply does not incur. For a miner that overhead is small, because mining hammers the GPU and barely touches the CPU. The simplification is the part worth having.
 
 Once the miner is a container, it is just another workload, and the whole apparatus for running workloads applies to it. That is where this stopped being about mining.
 
@@ -117,20 +119,19 @@ Once the miner is a container, it is just another workload, and the whole appara
 
 ## Building the container path
 
-The miner itself is someone else's tool. Phoenix Miner and T-Rex are both easy to drive and take a one percent developer fee, switching over to mine for their author for that share of the time. T-Rex has good Linux support, so that is the one I wrapped.
+The miner itself is someone else's tool. Phoenix Miner and T-Rex are both easy to drive and take a developer fee - 0.65 and one percent respectively - by switching over to mine for their author for that share of the time. T-Rex has good Linux support, so that is the one I wrapped.
 
 Using T-Rex is a matter of reading its command-line options and filling in the fields. Nothing about it needs modification, which is the point - the less of someone else's tool you touch, the less you maintain.
 
-**Build the image.** Write a Dockerfile on the development machine, so that what runs in production is what you tested. Docker Compose can expose a GPU to a container for local testing. Worth knowing: in production it is not Docker that enables the GPU for the container. That is the device plugin's job, and it is a different mechanism with different failure modes.
+**Build the image.** Write a Dockerfile on the development machine, so that what runs in production is what you tested. Docker Compose can expose a GPU to a container for local testing. Worth knowing: in production it is not Docker driving this. The device plugin discovers the cards, advertises them to the scheduler as an allocatable resource, and tells the kubelet which card a given container got. The injection of the device nodes and driver libraries is then done by NVIDIA's container runtime - the same machinery underneath `docker --gpus`. Same mechanism, different component driving it, which matters when you are working out which layer to debug.
 
-**Build it in CI.** Push the repository to GitHub and set up a workflow that publishes the image. GitHub hosts a container registry with a free tier around 500 MB, which is far more than a mining container needs. After that the pipeline builds the package on every push and the cluster pulls it. GitLab, Docker Hub or a self-hosted registry would work identically - GitHub just kept the number of accounts down.
+**Build it in CI.** Push the repository to GitHub and set up a workflow that publishes the image. The original post put GitHub's free registry allowance at around 500 MB and called that ample; that figure is the private-package storage quota, and public packages are not metered the same way. Either way the interesting question is your base image - anything built on a CUDA runtime base is well past 500 MB before your own code lands. After that the pipeline builds the package on every push and the cluster pulls it. GitLab, Docker Hub or a self-hosted registry would work identically - GitHub just kept the number of accounts down.
 
-**Deploy it.** With the image in a registry, four things matter on the Kubernetes side:
+**Deploy it.** With the image in a registry, three things matter on the Kubernetes side:
 
 - Install a device plugin on the GPU nodes. The [NVIDIA k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin) advertises the cards as a schedulable resource.
 - Set `replicas` to the number of agents you want. Where the node pool is backed by a cloud scale set - a managed group that creates identical machines on demand, which every major provider offers under its own name - that number can grow as far as the budget does.
 - Set a `nodeSelector` so the miner only lands on nodes that have a card. Without it the scheduler will happily place the pod somewhere with nothing to mine on.
-- Set `hostAliases` for the pool's domains. This pins the names to addresses in the pod's own `/etc/hosts` so the lookups never reach the cluster resolver. The original post recommended this to avoid awkward questions from whoever runs the DNS server, which is worth naming for what it is: that is evasion, and the [companion post](/posts/the-economics-that-make-cryptojacking-work/) argues the defender's side of exactly this. Left in because it is what the post said.
 
 A working example is at [minhtt159/ghcr-tictactoe](https://github.com/minhtt159/ghcr-tictactoe). The name is left over from what the repository started as, a throwaway for testing GitHub container registry publishing; what it holds is the Dockerfile and workflow described above. Fork it, change the wallet address, and it runs.
 
