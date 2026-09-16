@@ -210,7 +210,11 @@ Takes 11 sec to produce
 
 2047 against a requirement of 2020, in eleven seconds on 2020 hardware. Both the challenge and the solver are in [the merklision gist](https://gist.github.com/minhtt159/af8e19e2ac7088be48889ccd5c6e0e0b); every claim in this post about how the challenge behaves was checked against that source rather than against my memory of it, and several of them needed correcting.
 
-Note what 2047 is not. It is tempting to read it as `2^11 - 1`, one binary choice per level of a 1025-element tree with the empty case removed, and I believed something like that for years. The lengths say otherwise: the answers are one per list length from 2 to 2048, so the count is a range size and the resemblance to a power of two is just the padding ceiling being one.
+It is tempting to read 2047 as `2^11 - 1`, one binary choice per level of a 1025-element tree with the empty case removed. That reading gets the right number for the wrong reason, which is worse than getting it wrong.
+
+The count is the size of a range. The answers fill every length from 2 up to the ceiling, so there are `ceiling - 1` of them, and the ceiling is by construction the first power of two at or above `n`. A count of `2^k - 1` therefore falls out every time, without any per-level choice being involved. The power of two is the ceiling, not a tally of decisions.
+
+Running the same search at smaller sizes shows the shape holding: `n = 5` gives 7 answers against a ceiling of 8, `n = 9` gives 15 against 16, `n = 17` gives 31 against 32. Each one covers every length from 2 to its own ceiling exactly once.
 
 ## What it was worth
 
