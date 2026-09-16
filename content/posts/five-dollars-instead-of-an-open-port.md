@@ -9,9 +9,9 @@ tags: ["homelab", "networking", "vpn", "security"]
 
 > *Archive note. Written in March 2021 in Hanoi, for a blog I have since retired, and the earliest post in that blog's homelab sequence - everything else grew out of it. Prices and products are of their time, and the arrangement itself did not last long: I moved to the Netherlands within about a year, and a VPN hub hosted by a Vietnamese carrier stops being the obvious choice once you live on the other side of the planet from it. What follows chronologically is [mining ETH in a homelab](/posts/mining-eth-in-a-homelab/).*
 
-**TL;DR.** You want to reach a machine at home from outside. The textbook answer is to forward a port on the ISP modem, which in Vietnam is usually not available at all: residential lines sit behind carrier-grade NAT and have no public address to forward from. What does work is renting a VPS - a virtual private server, a small Linux machine rented by the month - and running a VPN on it that everything dials out to. Both designs put a process on the internet where strangers can reach it. The difference is how many, and whose. Forwarding grows one internet-reachable service per forward, some of them on appliance firmware nobody will ever patch. The VPN hub has two, both on a machine you administer: WireGuard, and the SSH you administer it with. That count does not move when the service list grows. The reason this matters is not the first service. It is the fourth.
+**TL;DR.** You want to reach a machine at home from outside. The textbook answer is to forward a port on the ISP modem. On my line that was not available at all - it sat behind carrier-grade NAT, with no public address to forward from - but the argument against it stands even where it is. What does work is renting a VPS - a virtual private server, a small Linux machine rented by the month - and running a VPN on it that everything dials out to. Both designs put a process on the internet where strangers can reach it. The difference is how many, and whose. Forwarding grows one internet-reachable service per forward, some of them on appliance firmware nobody will ever patch. The VPN hub has two, both on a machine you administer: WireGuard, and the SSH you administer it with. That count does not move when the service list grows. The reason this matters is not the first service. It is the fourth.
 
-Concretely: the VPN was WireGuard, deployed with [Algo](https://github.com/trailofbits/algo) - Ansible scripts from Trail of Bits that stand up a personal WireGuard or IPsec server with hardened defaults - on a virtual machine rented from Viettel IDC - a Vietnamese cloud provider whose small instances sit in much the same bracket as a DigitalOcean droplet, and the hosting arm of the same carrier that supplied the line at home. Both of those choices do more work in the argument than they look, so they get their own sections.
+Concretely: the VPN was WireGuard, deployed with [Algo](https://github.com/trailofbits/algo) - Ansible scripts from Trail of Bits that stand up a personal WireGuard or IPsec server with hardened defaults - on a virtual machine rented from Viettel IDC - a Vietnamese cloud provider, and the hosting arm of the same carrier that supplied the line at home. Both of those choices do more work in the argument than they look, so they get their own sections.
 
 ## The network everyone starts with
 
@@ -25,9 +25,9 @@ Then one day you want to reach the PC at home while you are not at home, and to 
 
 The hosted remote-desktop tools do this job and do it well:
 
-- **TeamViewer** is free only while your use counts as personal, and the moment it decides otherwise you are paying. The figure I had in mind at the time was 24.90 USD. I did not write down whether that was per month or per year, and without that the comparison cannot be made at all: against a monthly licence the VPS at 60 USD a year is less than half the price, and against an annual one it is more than double. I am not going to pick the branch that flatters the decision.
+- **TeamViewer** is free only while your use counts as personal, and the moment it decides otherwise you are paying. The figure I had in mind at the time was 24.90 USD. I did not write down whether that was per month or per year, and without that the comparison cannot be made at all: against a monthly licence the VPS at 60 USD a year is about a fifth of the price, and against an annual one it is more than double. I am not going to pick the branch that flatters the decision.
 - **AnyDesk** is the same shape with fewer features.
-- **Chrome Remote Desktop** is genuinely free, and it is what I would still point a non-technical person at. It also tries to negotiate a direct peer-to-peer route rather than hauling traffic through Google's relays, though behind carrier-grade NAT - which a Vietnamese residential line in 2021 frequently was - it falls back to relaying, and the signalling goes through Google either way. Its catch is small: it runs in Chrome, so some key combinations never reach the far machine - press Ctrl-W expecting to close a window over there and you close a tab over here.
+- **Chrome Remote Desktop** is genuinely free, and it is what I would still point a non-technical person at. It also tries to negotiate a direct peer-to-peer route rather than hauling traffic through Google's relays, though behind carrier-grade NAT - which my line was - it falls back to relaying, and the signalling goes through Google either way. Its catch is small: it runs in Chrome, so some key combinations never reach the far machine - press Ctrl-W expecting to close a window over there and you close a tab over here.
 
 So I should be straight about the decision, because the cost framing flatters it. Chrome Remote Desktop was free and solved the stated problem. Paying 5 USD a month to escape a hotkey collision would be absurd. What I actually wanted was a general-purpose machine with a public address, which happens to solve remote access as a side effect and then keeps being useful. The remote desktop was the excuse, not the reason.
 
@@ -41,7 +41,7 @@ Worth naming what that does not buy: the VPS is in the path for every packet, al
 
 WireGuard, put there by Algo.
 
-Algo is worth naming rather than leaving as "a VPN", because half of what makes this design defensible is which server you expose. It is Ansible, run from your own laptop against a fresh cloud instance, and its opinions are the point. It declines to install OpenVPN or Tor. It drops legacy cipher suites and protocols - no L2TP, no IKEv1, no RSA. It does not put its security on TLS. Users are declared in a config file before deployment and each one gets a generated WireGuard config and a QR code, so adding a phone is scanning a square rather than editing anything on the server. It builds on an Ubuntu LTS with unattended security upgrades switched on.
+Algo is worth naming rather than leaving as "a VPN", because half of what makes this design defensible is which server you expose. It is Ansible, run from your own laptop against a fresh cloud instance, and its opinions are the point. It declines to install OpenVPN or Tor. It drops legacy cipher suites and protocols - no L2TP, no IKEv1, no RSA. It does not put its security on TLS. Users are declared in a config file before deployment and each one gets a generated WireGuard config and a QR code, so adding a phone is scanning a square rather than editing anything on the server. It builds on an Ubuntu LTS - long-term support, the flavour that receives five years of security patches - with unattended security upgrades switched on.
 
 The WireGuard part matters more than the automation. WireGuard does not reply to packets that fail authentication, so it offers no banner, no version, and no handshake to anyone who cannot already prove they belong.
 
@@ -49,23 +49,21 @@ That is worth stating carefully rather than as a magic trick. A scanner still le
 
 It is also small. WireGuard's kernel implementation is a few thousand lines against the hundreds of thousands in the IPsec and OpenVPN stacks, and that ratio is the whole reason it is possible to feel relaxed about running one on a public address.
 
-## The port forward, and why I could not
+## The port forward, and why I did not
 
-The obvious objection: run the VPN server on the ISP modem, forward one port, save the 5 USD. If the address changes, dynamic DNS gives you a free name that tracks it. People do this and it works.
-
-Not in my flat, and not in most flats in Vietnam, because there is no address to forward from. Residential lines here sit behind carrier-grade NAT: the ISP hands out a private address on the WAN side of your modem and shares one real public address among a great many subscribers. Nothing outside can address your line, because your line has no address of its own.
-
-That is worth separating from the usual advice, because dynamic DNS is normally offered as the answer to "my IP changes" and people reach for it here too. It does not help. Dynamic DNS keeps a name pointed at an address that is yours but moves. Under CGNAT the address is not yours at any moment, and pointing a name at the carrier's shared address sends strangers to the carrier, not to you. The modem will still show you a port-forwarding page. It will still accept the rule. The rule will do nothing.
-
-So the honest order of events is that the decision was made for me before the security argument entered it. Outbound connections work fine under CGNAT - that is the whole point of it - so a tunnel dialled outward to something with a real address was not the clever choice, it was the only shape available.
-
-The security argument below stands on its own for anyone who does have a public address and a modem they can configure. It is the reason I would still do this having moved somewhere that hands out a routable IP without being asked. But I should not pretend I weighed it first.
+The obvious objection: run the VPN server at home behind the ISP modem, forward one port to it, save the 5 USD. If the address changes, dynamic DNS gives you a free name that tracks it. People do this and it works.
 
 Be precise about what a forward actually does, because I was sloppy about this for years. It is a translation rule on the modem, not a service running there. The modem listens for nothing; it rewrites the destination and hands the packet to a machine on the inside. The exposed process is on that machine.
 
-Which is the part that matters. Some of those machines are mine and I patch them: the VMs, the PC. One of them is a camera appliance running whatever firmware its vendor last felt like shipping, and I cannot patch that at all. The forward makes it reachable from the entire internet, and the modem in the middle is a device I did not choose and do not administer, so I cannot even put a useful rule in front of it.
+Which is the part that matters. Some of those machines you patch: the VMs, the PC. Some you cannot. A camera appliance runs whatever firmware its vendor last felt like shipping, and no update you can apply will change that. The forward makes it reachable from the entire internet, and the modem in the middle is a device you did not choose and do not administer, so you cannot even put a useful rule in front of it.
 
-So the exposure is not "a listener on the ISP's box". It is one internet-reachable service per forward, spread across machines of mixed provenance, some of which will never receive another update.
+So the exposure is not "a listener on the ISP's box". It is one internet-reachable service per forward, spread across machines of mixed provenance, some of which will never receive another update. That is the argument, and it is the reason I would still do this somewhere that hands out a routable address without being asked.
+
+There was a second reason, and in my flat it was decisive: there was no address to forward from. The line sat behind carrier-grade NAT, CGNAT for short. The ISP hands out a private address on the WAN side of your modem and shares one real public address among a great many subscribers. Nothing outside can address your line, because your line has no address of its own.
+
+That is worth separating from the usual advice, because dynamic DNS is normally offered as the answer to "my IP changes" and people reach for it here too. It does not help. Dynamic DNS keeps a name pointed at an address that is yours but moves. Under CGNAT the address is not yours at any moment, and pointing a name at the carrier's shared address sends strangers to the carrier, not to you. The modem will still show you a port-forwarding page. It will still accept the rule. The rule will do nothing.
+
+Outbound connections work fine under CGNAT - that is the whole point of it - so a tunnel dialled outward to something with a real address was the only shape available anyway. The security argument is why I would choose it; the NAT is why I could not have chosen otherwise.
 
 Since I already owned a domain, I bought the VPS and pointed a DNS record at it through Cloudflare, so I had a name rather than an address to remember. That is all Cloudflare is doing here - a VPN is not HTTP and does not travel through a caching proxy.
 
@@ -87,13 +85,13 @@ Two honest caveats before the conclusion.
 
 **The count grows only if you let it.** Three of those four services speak HTTP. One reverse proxy - a single web server that accepts every request and forwards it to whichever internal service the hostname belongs to - on one VM fronts all of them behind a single port, and now the growth is in proxy configuration rather than in forwarded ports. That is a real answer to the problem and it is what many people do. It also leaves you one internet-facing listener on a VM you patch - which, as the next section admits, is exactly where the VPN hub lands. The two designs are closer relatives than this post originally implied.
 
-**Not everything can join a VPN.** The camera is the first example in my own escalation, and a camera appliance almost certainly cannot run a VPN client, nor can most home-automation hubs. Those devices never join the tunnel. They stay on the LAN and speak to nothing outside it; what joins the tunnel are the clients, and the tunnel gives those clients a route onto the LAN where the appliances already live.
+**Not everything can join a VPN.** The camera is the first example in the escalation above, and a camera appliance almost certainly cannot run a VPN client, nor can most home-automation hubs. Those devices never join the tunnel. They stay on the LAN and speak to nothing outside it; what joins the tunnel are the clients, and the tunnel gives those clients a route onto the LAN where the appliances already live.
 
-That route does not appear by itself, and this is the step Algo does not do for you. Out of the box it builds a road-warrior server: clients dial in and reach the internet, not each other's home networks. To reach the camera you need one always-on machine at home to be a peer as well, carrying the LAN prefix in its allowed addresses and routing for the subnet, with the matching prefix configured on the client side. In my case that was a machine that was already running anyway, which is the recurring theme of this entire homelab. The appliance still does not participate, which is fortunate, because it cannot.
+That route does not appear by itself, and this is the step Algo does not do for you. Out of the box it builds a road-warrior server: clients dial in and reach the internet, not each other's home networks. To reach the camera you need one always-on machine at home to be a peer as well, carrying the LAN prefix in its allowed addresses and routing for the subnet, with the matching prefix configured on the client side. A machine that is already running anyway is the natural choice, which is the recurring theme of this entire homelab. The appliance still does not participate, which is fortunate, because it cannot.
 
 ## What the hub actually buys
 
-The VPN hub does not remove the internet-facing listener. It has one: the VPN server itself, on a public address, which is the whole point of it being reachable.
+The VPN hub does not remove the internet-facing listener. It has at least one: the VPN server itself, on a public address, which is the whole point of it being reachable.
 
 I spent this entire post arguing against internet-facing services, so let me state the real claim rather than the flattering one. The gain is not zero exposure, and it is not even down to one: Algo leaves SSH running, because that is how you administer the box. Call it two, of which one is silent and the other is the conventional hardened thing everybody already runs.
 
@@ -163,7 +161,7 @@ The gain is that the count stops tracking the service list. Four reachable servi
 
 Three bills come with this that the 5 USD does not cover.
 
-**You now run a server.** The modem was condemned for being unpatchable; the replacement is patchable and therefore must be patched. Algo takes the worst of that away by building on an Ubuntu long-term support release, the flavour that receives five years of security patches, with unattended upgrades on by default, which is more maintenance than most home routers ever receive. It does not take all of it away: unattended upgrades cover distribution packages, not the day that support window closes and the whole instance needs rebuilding. A VPN server abandoned across that boundary is worse than the port forward it replaced.
+**You now run a server.** The modem was condemned for being unpatchable; the replacement is patchable and therefore must be patched. Algo takes the worst of that away by building on an Ubuntu LTS with unattended upgrades on by default, which is more maintenance than most home routers ever receive. It does not take all of it away: unattended upgrades cover distribution packages, not the day that support window closes and the whole instance needs rebuilding. A VPN server abandoned across that boundary is worse than the port forward it replaced.
 
 **It is a single point of failure.** A forwarded port fails one service at a time. A hub fails everything at once, including the route you would use to get back in and fix it. That is a genuinely worse failure mode and the only mitigation is a second way in, which costs either money or the exact exposure you were avoiding.
 

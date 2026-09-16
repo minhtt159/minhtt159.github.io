@@ -7,7 +7,7 @@ summary: "A miner that schedules itself onto any GPU node is a workload like any
 tags: ["security", "threat-model", "kubernetes", "gpu", "cloud"]
 ---
 
-> *Archive note. Written in July 2021 for a blog I have since retired, when Ethereum still ran on proof of work, meaning its network was secured by machines racing to solve a puzzle and paid for doing it - which is what made a graphics card into an income source. EIP-1559, the fee-market change then weeks away, redirected most of each transaction fee to be destroyed rather than paid to whoever mined the block, cutting miner income at a stroke. Ethereum left proof of work entirely the following year. The coin is gone and the numbers with it; the economic argument is the part that still holds, and it applies to whatever GPUs turn out to be scarce for next.*
+> *Archive note. Written in July 2021 for a blog I have since retired, when Ethereum still ran on proof of work, meaning its network was secured by machines racing to solve a puzzle and paid for doing it - which is what made a graphics card into an income source. EIP-1559, the fee-market change then days away, redirected most of each transaction fee to be destroyed rather than paid to whoever mined the block, cutting miner income at a stroke. Ethereum left proof of work entirely the following year. The coin is gone and the numbers with it; the economic argument is the part that still holds, and it applies to whatever GPUs turn out to be scarce for next.*
 
 **TL;DR.** Cryptojacking is mining cryptocurrency on computers somebody else is paying for. This post is about why the arithmetic makes that so attractive, from someone who spent a while doing the paid-for version.
 
@@ -31,7 +31,7 @@ Kubernetes answers that directly. On a cloud provider it grows the instance coun
 
 None of this is new. Back in 2017, when ETH last ran up hard, people were already building on this stack to rent GPUs and mine. In 2018 the price crashed and the technique stopped being discussed as a business. That is worth stating precisely, because the rest of this post argues the economics are permanent: what the crash ended was the version where you pay for the compute. The version where you do not has no price floor to fall through, and it never went away.
 
-## When information technology does return on investment
+## When IT does the ROI maths
 
 The idea is a few lines of configuration. The hard question is not how, it is when: when is it worth renting at all?
 
@@ -108,9 +108,9 @@ The second is anything that shapes how a node comes up. A cloud scale set - the 
 
 The defensive reading is not "watch for miners". Signature-matching a known miner binary catches the lazy version and nothing else. The useful reading is that GPU capacity is a directly monetisable asset on your balance sheet, and should be protected the way other directly monetisable assets are:
 
-- **Treat inference and GPU-scheduling credentials as money.** Scope them, rotate them, and alert on use from somewhere they have never been used from. They are not read-only API keys; they are a way to spend your compute budget.
+- **Treat GPU-scheduling credentials as money, and inference credentials as the hop before them.** Scope them, rotate them, and alert on use from somewhere they have never been used from. They are not read-only API keys; they are a way to spend your compute budget.
 - **Version and review node initialisation the way you review production code.** A mutable startup script attached to a scale set is an unreviewed root shell that runs on every machine the group creates.
-- **Alert on utilisation, not on binaries or names.** Signature-matching a known miner catches the lazy version and nothing else, and DNS-based detection is barely better: I once had a firewall rule flagging mining-pool lookups on my own network, and got around it in about a minute with a stock Kubernetes `hostAliases` field, no privileges required. Anyone who can submit a pod spec can do the same. What does not dodge is the resource itself - sustained GPU utilisation with no job behind it, or instance counts growing without a workload to explain them. The billing anomaly and the capacity anomaly are the same event seen from two directions.
+- **Alert on utilisation, not on binaries or names.** DNS-based detection is barely better than signatures: a pod spec can pin a pool's name to an address in the pod's own hosts file, so the lookup never reaches your resolver, and anyone who can submit a pod spec can do it. What does not dodge is the resource itself - sustained GPU utilisation with no job behind it, or instance counts growing without a workload to explain them. The billing anomaly and the capacity anomaly are the same event seen from two directions.
 - **Assume the miner will hide in the noise.** The obvious counter to utilisation alerting is to throttle, sitting at a level that looks like ordinary load, and an attacker paying nothing has no reason to be greedy. That is an argument for baselining what each workload normally draws rather than alerting on a single global threshold.
 - **Ask what a compromised credential is worth in cash.** Most credential risk gets modelled as data loss, because that is what a breach usually costs. A credential in front of a GPU fleet has a second price: what an attacker can bill you for by simply using it. GPUs made that second price obvious earlier than the rest of the estate did, because the hardware was scarce and the resale value of its output was quoted publicly, by the hour.
 
