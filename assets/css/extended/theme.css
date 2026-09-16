@@ -11,7 +11,6 @@
     --content: #4c4f69;        /* text */
     --secondary: #6c6f85;      /* subtext0 */
     --tertiary: #ccd0da;       /* surface0 */
-    --code-block-bg: #e6e9ef;  /* mantle */
     --code-bg: #ccd0da;        /* surface0 */
     --border: #ccd0da;         /* surface0 */
     --link: #1e66f5;           /* blue */
@@ -36,7 +35,6 @@
     --content: #cdd6f4;        /* text */
     --secondary: #a6adc8;      /* subtext0 */
     --tertiary: #313244;       /* surface0 */
-    --code-block-bg: #181825;  /* mantle */
     --code-bg: #313244;        /* surface0 */
     --border: #313244;         /* surface0 */
     --link: #89b4fa;           /* blue */
@@ -114,3 +112,16 @@ svg.dg .ar-b { fill: var(--dg-b); }
 svg.dg .ar-c { fill: var(--dg-c); }
 svg.dg .ar-d { fill: var(--dg-d); }
 svg.dg .ar-e { fill: var(--dg-e); }
+
+/* Code blocks keep a Mocha surface in both theme states; see chroma.css for why
+   and for the token colours. Latte's accents cannot reach WCAG AA on a light
+   surface, so the block stays dark and the Latte page frames it (15.5:1 against
+   Latte base). Inline code is unaffected: it stays --code-bg, Latte surface0 in
+   light (5.17:1) and Mocha surface0 in dark (8.69:1), both already AA. */
+:root,
+:root[data-theme="dark"] { --code-block-bg: #181825; } /* mocha mantle, both states */
+
+/* PaperMod hardcodes rgb(213, 213, 214) here with no light-mode variant, which
+   left untagged fences at 1.21:1 on a Latte block. Carries the text colour for
+   any fence chroma does not tokenise. */
+.md-content pre code { color: #cdd6f4; } /* mocha text */
