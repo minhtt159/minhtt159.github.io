@@ -2,14 +2,16 @@
 title: "Five dollars a month instead of an open port"
 date: 2021-03-16T21:50:00+07:00
 draft: true
-description: "Every home service you add tempts you to forward one more port on a modem you do not own. Renting a small VPS as a VPN hub costs less than the remote-desktop licence it replaces and means the count of open ports stays at zero."
-summary: "The honest reason the homelab exists. Port forwarding on the ISP modem scales badly and scales dangerously: one hole per service, on a box you do not control. A 5 USD VPS turns every connection into an outbound one."
+description: "Every home service you add tempts you to forward one more port on a modem you do not own. Renting a small server as a VPN hub does not remove the internet-facing listener; it replaces several you cannot patch with one you can."
+summary: "The honest reason the homelab exists. Port forwarding on the ISP modem accumulates: one listener per service, on a box you do not administer. A 5 USD virtual server does not make the listener disappear - it moves it somewhere you control."
 tags: ["homelab", "networking", "vpn", "security"]
 ---
 
-> *Archive note. Written in March 2021 for a blog I have since retired, and the earliest post in this sequence - everything else here grew out of it. The prices and the specific products are of their time. The ISP is genericised. What follows next chronologically is [mining ETH in a homelab](/posts/mining-eth-in-a-homelab/).*
+> *Archive note. Written in March 2021 for a blog I have since retired, and the earliest post in that blog's homelab sequence - everything else grew out of it. Prices and products are of their time, and the home ISP is genericised. What follows chronologically is [mining ETH in a homelab](/posts/mining-eth-in-a-homelab/).*
 
-**TL;DR.** You want to reach a machine at home from outside. The obvious answers are a hosted remote-desktop product or forwarding a port on the ISP modem. The product costs more than a small VPS and does less; the port forward is free but puts a listening service on a box you do not own, that your ISP may forbid you to change, and that the whole internet can reach. Renting the cheapest VPS available at 5 USD a month and running a VPN on it inverts the direction: every device dials out to the hub, sees every other device as though they shared a LAN, and the number of inbound holes at home stays zero. The reason that matters is not the first service. It is the fourth.
+**TL;DR.** You want to reach a machine at home from outside. You can forward a port on the ISP modem, or you can rent a VPS - a virtual private server, a small Linux machine rented by the month - and run a VPN on it that everything dials out to. Both designs put a process on the internet where strangers can reach it. The difference is how many, and whose. Forwarding grows one internet-facing listener per service, on firmware you did not choose and cannot patch. The VPN hub has exactly one listener, on a machine you administer, and that count does not move when the service list grows. The reason this matters is not the first service. It is the fourth.
+
+This post is an argument, not a runbook. The original never recorded which VPN software I used, so I am not going to pretend otherwise - the shape of the design is what carried over, and the shape is what is worth reading.
 
 ## The network everyone starts with
 
@@ -19,61 +21,73 @@ That is enough for what most people need. Web, streaming, games with low latency
 
 Then one day you want to reach the PC at home while you are not at home, and to do it safely.
 
-## The obvious products, and what they cost
+## The ready-made answers
 
-The ready-made answers are the hosted remote-desktop tools, and they work well at the job they do. Each has a catch:
+The hosted remote-desktop tools do this job and do it well:
 
-- **TeamViewer** is free only if your use counts as personal, and the moment it decides otherwise you are paying. The licence I was comparing against was 24.90 USD.
+- **TeamViewer** is free only while your use counts as personal, and the moment it decides otherwise you are paying. The figure I had in mind at the time was 24.90 USD. I did not write down whether that was per month or per year, and I am not going to reconstruct it now - which means I cannot honestly claim the VPS was cheaper, only that it was not obviously more expensive and did considerably more.
 - **AnyDesk** is the same shape with fewer features.
-- **Chrome Remote Desktop** is genuinely free and it is the one I would point a non-technical person at. It also renegotiates to a direct route rather than hauling traffic through Google's servers. The catch is that it runs in Chrome, so some key combinations never reach the remote machine - press Ctrl-W expecting to close a window over there and you close a tab over here.
+- **Chrome Remote Desktop** is genuinely free, and it is what I would still point a non-technical person at. It also renegotiates to a direct route instead of hauling traffic through Google's servers. Its catch is small: it runs in Chrome, so some key combinations never reach the far machine - press Ctrl-W expecting to close a window over there and you close a tab over here.
 
-I was lazy and short of money, which is a combination that pushes you toward the option that solves more than one problem. The cheapest VPS on offer was 5 USD a month. That is less than the remote-desktop licence, and a VPS is a general-purpose machine rather than a single-purpose product.
+So I should be straight about the decision, because the cost framing flatters it. Chrome Remote Desktop was free and solved the stated problem. Paying 5 USD a month to escape a hotkey collision would be absurd. What I actually wanted was a general-purpose machine with a public address, which happens to solve remote access as a side effect and then keeps being useful. The remote desktop was the excuse, not the reason.
 
-Point the devices at a VPN running on that VPS and they stop being machines on separate networks. They see each other as if they were on one LAN, which means the free, built-in remote-desktop tools - RDP, VNC - just work, with no third party in the path and no product tier to worry about. Laptop, phone, tablet, all reaching the machines at home, for 5 USD a month.
+Point everything at a VPN running on that VPS and the devices stop being on separate networks. They address each other as though they shared a LAN, which means the built-in remote-desktop protocols - RDP on Windows, VNC elsewhere - work with no product tier involved. Laptop, phone, tablet, all reaching the machines at home.
+
+Worth naming what that does not buy: the VPS is a third party in the path, and unlike Chrome Remote Desktop's direct route, it is in the path for every packet. I traded a company I do not control for a rented box I do, which is a real improvement in authority and a real regression in hop count.
 
 ## The port forward, and why I did not
 
-The objection is immediate and fair: run the VPN server on the ISP modem itself, forward a port, and save the 5 USD. If the contract does not include a static IP, dynamic DNS services will hand you a free domain that tracks your address as it changes. People do this and it works.
+The obvious objection: run the VPN server on the ISP modem, forward one port, save the 5 USD. If the contract has no static IP, dynamic DNS will give you a free name that tracks the address as it moves. People do this and it works.
 
-I am not going to call it wrong. I will say what it costs, because the cost is not obvious when there is only one service.
+The catch is that it works only where the ISP lets you configure the modem at all. Plenty of contracts ship locked firmware, and where that is true this alternative does not lose on security, it simply is not available. Where it is available, here is what it costs.
 
-Forwarding a port puts a process in listening state, reachable from the entire internet, on a device you did not choose, do not administer, and cannot patch. Your ISP picked it, ships its firmware, and in many contracts reserves the right to refuse you the configuration anyway. That is a large attack surface for a saving of 5 USD, and the asymmetry is unpleasant: you are betting the security of everything behind that modem against a rounding error on a monthly bill.
+Forwarding a port puts a process in listening state, reachable from the entire internet, on a device you did not choose, do not administer, and cannot patch. Your ISP picked it and ships its firmware on its own schedule. When a vulnerability lands in that firmware, your options are to wait.
 
-Since I already owned a domain, I bought the VPS and pointed Cloudflare at it. That part was preference rather than necessity.
+Since I already owned a domain, I bought the VPS and pointed a DNS record at it through Cloudflare, so I had a name rather than an address to remember. That is all Cloudflare is doing here - a VPN is not HTTP and does not travel through a caching proxy.
 
 ## Then it happens again
 
 Here is the part that changes the arithmetic, and the reason this post exists.
 
-You put up a security camera. It has a box, the box wants a port, you forward one so the phone app can see the feed. Fine - one port.
+You put up a security camera. Its recorder wants to be reachable so the phone app can see the feed, so you forward a port. Fine - one.
 
-A few days later you want to host something at home, a blog perhaps. A VM, and a port exposed to the internet. Two.
+A few days later you want to host something at home, a blog perhaps. A VM, another port. Two.
 
-A few days after that it is home automation: the garage door, the water heater, the lights. Another VM, another port. Three.
+Then home automation: the garage door, the water heater, the lights. Another VM, another port. Three.
 
-Then there is the several hundred gigabytes of material on the PC that you would like to watch in bed, or away from the house entirely. Four.
+Then the several hundred gigabytes of material on the PC that you want to watch from outside the house. Four.
 
-The list of things you might want to run at home does not terminate. Each one, taken alone, is one small hole and a reasonable trade. Taken together they are a steadily growing inbound attack surface on hardware you do not control, added one defensible decision at a time. That is what makes it dangerous: no single step feels like the wrong call.
+The list does not terminate. Each addition, alone, is one small hole and a reasonable trade. Together they are a steadily growing inbound attack surface on hardware you do not control, assembled one defensible decision at a time. That is what makes it dangerous: no single step feels like the wrong call.
 
-The VPN hub does not make any individual service safer. It makes the count stop growing. Every service stays bound to the private network, every client arrives through the tunnel, and the number of ports open on the modem stays at zero no matter how long the list of services gets.
+Two honest caveats before the conclusion.
+
+**The count grows only if you let it.** Three of those four services speak HTTP. One reverse proxy on one VM fronts all of them behind a single port, and now the growth is in proxy configuration rather than in forwarded ports. That is a real answer to the problem and it is what many people do. It also leaves you one internet-facing listener on a VM you patch - which, as the next section admits, is exactly where the VPN hub lands. The two designs are closer relatives than this post originally implied.
+
+**Not everything can join a VPN.** The camera is the first example in my own escalation, and a camera appliance almost certainly cannot run a VPN client, nor can most home-automation hubs. Those devices never join the tunnel. They stay on the LAN and speak to nothing outside it; what joins the tunnel are the clients, and the tunnel gives those clients a route onto the LAN where the appliances already live. The appliance does not need to participate for this to work, which is fortunate, because it cannot.
+
+## What the hub actually buys
+
+The VPN hub does not remove the internet-facing listener. It has one: the VPN server itself, on a public address, which is the whole point of it being reachable.
+
+I spent this entire post arguing against internet-facing listeners, so let me state the real claim rather than the flattering one. The gain is not zero exposure. It is that the count stops tracking the service list, and that the one remaining listener sits on a machine I chose, administer and can patch the same day a vulnerability is published. Four listeners on ISP firmware become one listener on my own box, and the fifth service adds none.
 
 <svg class="dg" viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hub-t hub-d">
-<title id="hub-t">A port per service versus one outbound tunnel</title>
-<desc id="hub-d">Left: the internet reaches the ISP modem, and each home service the owner adds - camera, blog, home automation, media - needs its own forwarded inbound port on that modem, so the number of internet-reachable listeners grows with the number of services, on hardware the owner does not administer. Right: a rented VPS runs a VPN hub. The modem opens nothing. Devices away from home and the home network itself both dial outward to the hub and meet there, so adding services leaves the count of inbound ports at zero.</desc>
+<title id="hub-t">Where the internet-facing listener lives, in two designs</title>
+<desc id="hub-d">Both designs have something listening on the internet; the diagram is about how many and on whose hardware. Left: the internet reaches the ISP modem, and each service the owner adds - camera, blog, home automation, media - needs its own forwarded inbound port there, so the number of internet-reachable listeners grows with the service list, on firmware the owner did not choose and cannot patch. Right: the internet reaches one listener, the VPN server on a rented virtual server the owner administers. The ISP modem forwards nothing; the home network and any device away from home both dial outward to that hub and meet on it. Adding a fifth service leaves the listener count at one. Red marks an internet-facing listener in both panels, so the single red arrow on the right is the honest admission that the exposure moved rather than vanished.</desc>
 <defs>
   <marker id="hub-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar" d="M0,0 L7,3 L0,6 Z"/></marker>
   <marker id="hub-ar-b" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar-b" d="M0,0 L7,3 L0,6 Z"/></marker>
   <marker id="hub-ar-c" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path class="ar-c" d="M0,0 L7,3 L0,6 Z"/></marker>
 </defs>
 <rect class="zone" x="20" y="30" width="420" height="350" rx="6"/>
-<text class="t" x="40" y="56">A port for each thing</text>
+<text class="t" x="40" y="56">Four listeners, none of them yours</text>
 <text class="s" x="40" y="74">the count grows with the service list</text>
-<rect class="box-e" x="175" y="90" width="110" height="36" rx="4"/>
-<text class="m" x="230" y="113" text-anchor="middle">internet</text>
-<path class="ln-c" d="M230,126 L230,144" marker-end="url(#hub-ar-c)"/>
+<rect class="box-e" x="175" y="90" width="110" height="34" rx="4"/>
+<text class="m" x="230" y="112" text-anchor="middle">internet</text>
+<path class="ln-c" d="M230,124 L230,144" marker-end="url(#hub-ar-c)"/>
 <rect class="box-c" x="150" y="150" width="160" height="44" rx="4"/>
 <text class="m" x="230" y="170" text-anchor="middle">ISP modem</text>
-<text class="s" x="230" y="187" text-anchor="middle">4 inbound ports open</text>
+<text class="s" x="230" y="187" text-anchor="middle">4 ports forwarded</text>
 <path class="ln-c" d="M230,194 L230,216 L80,216 L80,234" marker-end="url(#hub-ar-c)"/>
 <path class="ln-c" d="M230,194 L230,216 L180,216 L180,234" marker-end="url(#hub-ar-c)"/>
 <path class="ln-c" d="M230,194 L230,216 L280,216 L280,234" marker-end="url(#hub-ar-c)"/>
@@ -86,36 +100,49 @@ The VPN hub does not make any individual service safer. It makes the count stop 
 <text class="s" x="280" y="266" text-anchor="middle">home auto</text>
 <rect class="box" x="334" y="240" width="92" height="42" rx="4"/>
 <text class="s" x="380" y="266" text-anchor="middle">media</text>
-<text class="s" x="40" y="318">every listener is reachable from the whole internet</text>
-<text class="s" x="40" y="340">on a box the ISP chose, ships firmware for, and may lock</text>
+<text class="s" x="40" y="318">firmware you did not choose and cannot patch</text>
+<text class="s" x="40" y="340">when a bug lands in it, your option is to wait</text>
 <text class="s" x="40" y="362">no single one of these feels like the wrong call</text>
 <rect class="zone" x="460" y="30" width="420" height="350" rx="6"/>
-<text class="t" x="480" y="56">One tunnel out</text>
-<text class="s" x="480" y="74">5 USD a month, nothing listening at home</text>
-<rect class="box-a" x="600" y="90" width="140" height="44" rx="4"/>
-<text class="m" x="670" y="110" text-anchor="middle">VPS</text>
-<text class="s" x="670" y="127" text-anchor="middle">VPN hub</text>
-<rect class="box" x="480" y="175" width="120" height="42" rx="4"/>
-<text class="s" x="540" y="195" text-anchor="middle">laptop, phone</text>
-<text class="s" x="540" y="211" text-anchor="middle">anywhere</text>
-<rect class="box-b" x="700" y="175" width="160" height="42" rx="4"/>
-<text class="m" x="780" y="195" text-anchor="middle">ISP modem</text>
-<text class="s" x="780" y="211" text-anchor="middle">0 ports open</text>
-<path class="ln-b" d="M540,175 L540,154 L670,154 L670,140" marker-end="url(#hub-ar-b)"/>
-<path class="ln-b" d="M780,175 L780,154 L670,154" />
-<rect class="box-b" x="690" y="255" width="180" height="48" rx="4"/>
-<text class="m" x="780" y="275" text-anchor="middle">home services</text>
-<text class="s" x="780" y="292" text-anchor="middle">the same four, and the next</text>
-<path class="ln-b" d="M780,255 L780,223" marker-end="url(#hub-ar-b)"/>
-<text class="s" x="480" y="330">both ends dial outward and meet on the hub</text>
-<text class="s" x="480" y="352">add the fifth service and the port count is still zero</text>
+<text class="t" x="480" y="56">One listener, and it is yours</text>
+<text class="s" x="480" y="74">the count does not move when the list grows</text>
+<rect class="box-e" x="480" y="90" width="100" height="34" rx="4"/>
+<text class="m" x="530" y="112" text-anchor="middle">internet</text>
+<path class="ln-c" d="M580,107 L644,107" marker-end="url(#hub-ar-c)"/>
+<rect class="box-a" x="650" y="84" width="200" height="46" rx="4"/>
+<text class="m" x="750" y="104" text-anchor="middle">VPS: VPN hub</text>
+<text class="s" x="750" y="121" text-anchor="middle">1 listener, yours to patch</text>
+<rect class="box" x="480" y="168" width="120" height="42" rx="4"/>
+<text class="s" x="540" y="188" text-anchor="middle">laptop, phone</text>
+<text class="s" x="540" y="204" text-anchor="middle">away from home</text>
+<path class="ln-b" d="M540,168 L540,148 L750,148 L750,136" marker-end="url(#hub-ar-b)"/>
+<rect class="box" x="670" y="180" width="160" height="42" rx="4"/>
+<text class="m" x="750" y="200" text-anchor="middle">ISP modem</text>
+<text class="s" x="750" y="216" text-anchor="middle">0 ports forwarded</text>
+<path class="ln-b" d="M750,180 L750,136" marker-end="url(#hub-ar-b)"/>
+<rect class="box-b" x="670" y="262" width="160" height="50" rx="4"/>
+<text class="m" x="750" y="282" text-anchor="middle">home LAN</text>
+<text class="s" x="750" y="299" text-anchor="middle">the four, and the next</text>
+<path class="ln-b" d="M750,262 L750,228" marker-end="url(#hub-ar-b)"/>
+<text class="s" x="480" y="338">green dials outward; nothing at home accepts a connection</text>
+<text class="s" x="480" y="360">appliances never join the tunnel - the clients do, and reach them</text>
 <rect class="zone" x="20" y="400" width="860" height="60" rx="6"/>
-<text class="t" x="40" y="426">The VPN does not make any one service safer</text>
-<text class="s" x="40" y="448">It stops the number of internet-reachable listeners growing with the number of things you run.</text>
+<text class="t" x="40" y="426">The hub does not remove the exposure. It relocates it.</text>
+<text class="s" x="40" y="448">Four listeners on firmware you cannot patch become one on a machine you can, and the fifth service adds none.</text>
 </svg>
+
+## What it costs, stated plainly
+
+Three bills come with this that the 5 USD does not cover.
+
+**You now run a server.** The modem was condemned for being unpatchable; the replacement is patchable and therefore must be patched, by me, indefinitely. A VPN server left unattended for two years is worse than the port forward it replaced, because at least the ISP occasionally ships firmware.
+
+**It is a single point of failure.** A forwarded port fails one service at a time. A hub fails everything at once, including the route you would use to get back in and fix it. That is a genuinely worse failure mode and the only mitigation is a second way in, which costs either money or the exact exposure you were avoiding.
+
+**Everything transits the rented box.** Including, if you go through with the media plan, video. On the cheapest instance available, which comes with the bandwidth allowance you would expect at that price. Watching something in bed never needed the tunnel - that traffic is local - but watching it from elsewhere does, and that is where this design meets its limit.
 
 ## What this actually was
 
-I wrote this as a log of my own decisions, so that when something broke months later I would know where to look, and on the off-chance it helped somebody else circling the same choice.
+I wrote it as a log of my own decisions, so that when something broke months later I would know where to look, and on the chance it helped somebody circling the same choice.
 
-Reading it back, it is the load-bearing decision. Once every machine at home sits on one private network that outside devices can join, the questions stop being about connectivity and start being about capacity: what else could run here, which box should run it, and what happens when one of them dies. That is a homelab. It started as an argument about 5 USD and a port.
+Reading it back, it is the load-bearing one. Once every machine at home sits on one private network that outside devices can join, the questions stop being about connectivity and start being about capacity: what else could run here, which box should run it, and what happens when one of them dies. That is a homelab. It started as an argument about 5 USD and a port.
